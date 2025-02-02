@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -188,6 +188,35 @@ public interface Func<Children, R> extends Serializable {
      * @return children
      */
     Children notIn(boolean condition, R column, Object... values);
+
+    /**
+     * 字段 EQ ( sql语句 )
+     * <p>!! sql 注入方式的 eq 方法 !!</p>
+     * <p>例1: eqSql("id", "1")</p>
+     * <p>例2: eqSql("id", "select MAX(id) from table")</p>
+     *
+     * @param column 字段
+     * @param sql    sql语句
+     * @return children
+     * @since 3.5.6
+     */
+    default Children eqSql(R column, String sql) {
+        return eqSql(true, column, sql);
+    }
+
+    /**
+     * 字段 EQ ( sql语句 )
+     * <p>!! sql 注入方式的 eq 方法 !!</p>
+     * <p>例1: eqSql("id", "1")</p>
+     * <p>例2: eqSql("id", "select MAX(id) from table")</p>
+     *
+     * @param condition 执行条件
+     * @param column    字段
+     * @param sql       sql语句
+     * @return children
+     * @since 3.5.6
+     */
+    Children eqSql(boolean condition, R column, String sql);
 
     /**
      * 字段 IN ( sql语句 )

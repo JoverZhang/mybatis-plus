@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,26 +15,12 @@
  */
 package com.baomidou.mybatisplus.core.metadata;
 
-import com.baomidou.mybatisplus.annotation.DbType;
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.KeySequence;
-import com.baomidou.mybatisplus.annotation.OrderBy;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableLogic;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
 import com.baomidou.mybatisplus.core.config.GlobalConfig;
 import com.baomidou.mybatisplus.core.handlers.AnnotationHandler;
 import com.baomidou.mybatisplus.core.handlers.PostInitTableInfoHandler;
 import com.baomidou.mybatisplus.core.incrementer.IKeyGenerator;
-import com.baomidou.mybatisplus.core.toolkit.ClassUtils;
-import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
-import com.baomidou.mybatisplus.core.toolkit.ExceptionUtils;
-import com.baomidou.mybatisplus.core.toolkit.GlobalConfigUtils;
-import com.baomidou.mybatisplus.core.toolkit.LambdaUtils;
-import com.baomidou.mybatisplus.core.toolkit.ReflectionKit;
-import com.baomidou.mybatisplus.core.toolkit.StringPool;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.core.toolkit.*;
 import org.apache.ibatis.builder.MapperBuilderAssistant;
 import org.apache.ibatis.builder.StaticSqlSource;
 import org.apache.ibatis.executor.keygen.KeyGenerator;
@@ -44,17 +30,13 @@ import org.apache.ibatis.logging.LogFactory;
 import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.mapping.ResultMap;
 import org.apache.ibatis.mapping.SqlCommandType;
+import org.apache.ibatis.parsing.PropertyParser;
 import org.apache.ibatis.reflection.Reflector;
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.type.SimpleTypeRegistry;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static java.util.stream.Collectors.toList;
@@ -190,12 +172,10 @@ public class TableInfoHelper {
         tableInfo.setCurrentNamespace(currentNamespace);
 
         /* 初始化表名相关 */
-        final String[] excludeProperty = initTableName(clazz, globalConfig, tableInfo);
-
-        List<String> excludePropertyList = excludeProperty != null && excludeProperty.length > 0 ? Arrays.asList(excludeProperty) : Collections.emptyList();
+        PropertySelector propertySelector = initTableName(clazz, globalConfig, tableInfo);
 
         /* 初始化字段相关 */
-        initTableFields(configuration, clazz, globalConfig, tableInfo, excludePropertyList);
+        initTableFields(configuration, clazz, globalConfig, tableInfo, propertySelector);
 
         /* 自动构建 resultMap */
         tableInfo.initResultMapIfNeed();
@@ -218,21 +198,20 @@ public class TableInfoHelper {
      * @param tableInfo    数据库表反射信息
      * @return 需要排除的字段名
      */
-    private static String[] initTableName(Class<?> clazz, GlobalConfig globalConfig, TableInfo tableInfo) {
+    private static PropertySelector initTableName(Class<?> clazz, GlobalConfig globalConfig, TableInfo tableInfo) {
         /* 数据库全局配置 */
         GlobalConfig.DbConfig dbConfig = globalConfig.getDbConfig();
         AnnotationHandler annotationHandler = globalConfig.getAnnotationHandler();
         TableName table = annotationHandler.getAnnotation(clazz, TableName.class);
-
+        Configuration configuration = tableInfo.getConfiguration();
         String tableName = clazz.getSimpleName();
         String tablePrefix = dbConfig.getTablePrefix();
         String schema = dbConfig.getSchema();
         boolean tablePrefixEffect = true;
-        String[] excludeProperty = null;
-
+        PropertySelector propertySelector = i -> true;
         if (table != null) {
             if (StringUtils.isNotBlank(table.value())) {
-                tableName = table.value();
+                tableName = PropertyParser.parse(table.value(), configuration.getVariables());
                 if (StringUtils.isNotBlank(tablePrefix) && !table.keepGlobalPrefix()) {
                     tablePrefixEffect = false;
                 }
@@ -240,14 +219,22 @@ public class TableInfoHelper {
                 tableName = initTableNameWithDbConfig(tableName, dbConfig);
             }
             if (StringUtils.isNotBlank(table.schema())) {
-                schema = table.schema();
+                schema = PropertyParser.parse(table.schema(), configuration.getVariables());
             }
             /* 表结果集映射 */
             if (StringUtils.isNotBlank(table.resultMap())) {
                 tableInfo.setResultMap(table.resultMap());
             }
             tableInfo.setAutoInitResultMap(table.autoResultMap());
-            excludeProperty = table.excludeProperty();
+            String[] ep = table.excludeProperty();
+            String[] ip = table.properties();
+            if (ArrayUtils.isNotEmpty(ip)) {
+                List<String> list = Arrays.asList(ip);
+                propertySelector = list::contains;
+            } else if (ArrayUtils.isNotEmpty(ep)) {
+                List<String> list = Arrays.asList(ep);
+                propertySelector = i -> !list.contains(i);
+            }
         } else {
             tableName = initTableNameWithDbConfig(tableName, dbConfig);
         }
@@ -275,7 +262,7 @@ public class TableInfoHelper {
         if (CollectionUtils.isNotEmpty(dbConfig.getKeyGenerators())) {
             tableInfo.setKeySequence(annotationHandler.getAnnotation(clazz, KeySequence.class));
         }
-        return excludeProperty;
+        return propertySelector;
     }
 
     /**
@@ -310,7 +297,8 @@ public class TableInfoHelper {
      * @param globalConfig 全局配置
      * @param tableInfo    数据库表反射信息
      */
-    private static void initTableFields(Configuration configuration, Class<?> clazz, GlobalConfig globalConfig, TableInfo tableInfo, List<String> excludeProperty) {
+    private static void initTableFields(Configuration configuration, Class<?> clazz, GlobalConfig globalConfig,
+                                        TableInfo tableInfo, PropertySelector propertySelector) {
         AnnotationHandler annotationHandler = globalConfig.getAnnotationHandler();
         PostInitTableInfoHandler postInitTableInfoHandler = globalConfig.getPostInitTableInfoHandler();
         Reflector reflector = tableInfo.getReflector();
@@ -324,7 +312,7 @@ public class TableInfoHelper {
 
         List<TableFieldInfo> fieldList = new ArrayList<>(list.size());
         for (Field field : list) {
-            if (excludeProperty.contains(field.getName())) {
+            if (!propertySelector.selection(field.getName())) {
                 continue;
             }
 
@@ -383,7 +371,7 @@ public class TableInfoHelper {
      * </p>
      *
      * @param clazz 实体类
-     * @param list 字段列表
+     * @param list  字段列表
      * @return true 为存在 {@link TableId} 注解;
      */
     public static boolean isExistTableId(Class<?> clazz, List<Field> list) {
@@ -410,7 +398,7 @@ public class TableInfoHelper {
      * </p>
      *
      * @param clazz 实体类
-     * @param list 字段列表
+     * @param list  字段列表
      * @return true 为存在 {@link TableLogic} 注解;
      */
     public static boolean isExistTableLogic(Class<?> clazz, List<Field> list) {
@@ -437,7 +425,7 @@ public class TableInfoHelper {
      * </p>
      *
      * @param clazz 实体类
-     * @param list 字段列表
+     * @param list  字段列表
      * @return true 为存在 {@link OrderBy} 注解;
      */
     public static boolean isExistOrderBy(Class<?> clazz, List<Field> list) {
@@ -451,7 +439,7 @@ public class TableInfoHelper {
      * 判断排序注解是否存在
      * </p>
      *
-     * @param list 字段列表
+     * @param list              字段列表
      * @param annotationHandler 注解处理类
      * @return true 为存在 {@link OrderBy} 注解;
      */
@@ -464,10 +452,10 @@ public class TableInfoHelper {
      * 主键属性初始化
      * </p>
      *
-     * @param globalConfig  全局配置信息
-     * @param tableInfo 表信息
-     * @param field     字段
-     * @param tableId   注解
+     * @param globalConfig 全局配置信息
+     * @param tableInfo    表信息
+     * @param field        字段
+     * @param tableId      注解
      */
     private static void initTableIdWithAnnotation(GlobalConfig globalConfig, TableInfo tableInfo, Field field, TableId tableId) {
         GlobalConfig.DbConfig dbConfig = globalConfig.getDbConfig();
@@ -522,8 +510,8 @@ public class TableInfoHelper {
      * </p>
      *
      * @param globalConfig 全局配置
-     * @param tableInfo 表信息
-     * @param field     字段
+     * @param tableInfo    表信息
+     * @param field        字段
      * @return true 继续下一个属性判断，返回 continue;
      */
     private static boolean initTableIdWithoutAnnotation(GlobalConfig globalConfig, TableInfo tableInfo, Field field) {
@@ -643,4 +631,8 @@ public class TableInfoHelper {
         return new SelectKeyGenerator(mappedStatement, true);
     }
 
+    @FunctionalInterface
+    private interface PropertySelector {
+        boolean selection(String property);
+    }
 }

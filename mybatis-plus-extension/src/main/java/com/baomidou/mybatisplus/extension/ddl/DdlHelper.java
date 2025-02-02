@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,19 @@
  */
 package com.baomidou.mybatisplus.extension.ddl;
 
+import com.baomidou.mybatisplus.annotation.DbType;
 import com.baomidou.mybatisplus.core.toolkit.StringPool;
-import com.baomidou.mybatisplus.extension.ddl.history.IDdlGenerator;
-import com.baomidou.mybatisplus.extension.ddl.history.MysqlDdlGenerator;
-import com.baomidou.mybatisplus.extension.ddl.history.OracleDdlGenerator;
-import com.baomidou.mybatisplus.extension.ddl.history.PostgreDdlGenerator;
-import com.baomidou.mybatisplus.extension.plugins.pagination.DialectFactory;
-import com.baomidou.mybatisplus.extension.plugins.pagination.dialects.*;
+import com.baomidou.mybatisplus.extension.spi.CompatibleHelper;
+import com.baomidou.mybatisplus.extension.ddl.history.*;
 import com.baomidou.mybatisplus.extension.toolkit.JdbcUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.io.Resources;
 import org.apache.ibatis.jdbc.ScriptRunner;
 import org.apache.ibatis.jdbc.SqlRunner;
-import org.springframework.core.io.ClassPathResource;
 
 import javax.sql.DataSource;
 import java.io.*;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
@@ -126,7 +122,7 @@ public class DdlHelper {
     }
 
     public static InputStream getInputStream(String path) throws Exception {
-        return new ClassPathResource(path).getInputStream();
+        return CompatibleHelper.getCompatibleSet().getInputStream(path);
     }
 
     protected static String getNowTime() {
@@ -135,7 +131,7 @@ public class DdlHelper {
 
     public static ScriptRunner getScriptRunner(Connection connection, boolean autoCommit) {
         ScriptRunner scriptRunner = new ScriptRunner(connection);
-        Resources.setCharset(Charset.forName(StringPool.UTF_8));
+        Resources.setCharset(StandardCharsets.UTF_8);
         scriptRunner.setAutoCommit(autoCommit);
         scriptRunner.setEscapeProcessing(false);
         scriptRunner.setRemoveCRs(true);
@@ -145,17 +141,23 @@ public class DdlHelper {
     }
 
     protected static IDdlGenerator getDdlGenerator(String jdbcUrl) throws RuntimeException {
-        IDialect dialect = DialectFactory.getDialect(JdbcUtils.getDbType(jdbcUrl));
-        if (dialect instanceof MySqlDialect) {
+        DbType dbType = JdbcUtils.getDbType(jdbcUrl);
+        // mysql same type
+        if (dbType.mysqlSameType()) {
             return MysqlDdlGenerator.newInstance();
         }
-        if (dialect instanceof PostgreDialect) {
-            return PostgreDdlGenerator.newInstance();
-        }
-        if (dialect instanceof OracleDialect || dialect instanceof Oracle12cDialect) {
+        // oracle same type
+        else if (dbType.oracleSameType()) {
             return OracleDdlGenerator.newInstance();
         }
-        throw new RuntimeException("The database is not supported");
+        else if (DbType.SQLITE == dbType){
+            return SQLiteDdlGenerator.newInstance();
+        }
+        // postgresql same type
+        else if (dbType.postgresqlSameType()) {
+            return PostgreDdlGenerator.newInstance();
+        }
+        throw new RuntimeException("Unsupported database type: " + jdbcUrl);
     }
 
     public static String getDatabase(String jdbcUrl) {

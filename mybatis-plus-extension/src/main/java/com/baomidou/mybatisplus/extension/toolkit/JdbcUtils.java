@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,8 +72,6 @@ public class JdbcUtils {
         } else if (url.contains(":oracle:")) {
             return DbType.ORACLE;
         } else if (url.contains(":sqlserver:") || url.contains(":microsoft:")) {
-            return DbType.SQL_SERVER2005;
-        } else if (url.contains(":sqlserver2012:")) {
             return DbType.SQL_SERVER;
         } else if (url.contains(":postgresql:")) {
             return DbType.POSTGRE_SQL;
@@ -101,7 +99,7 @@ public class JdbcUtils {
             return DbType.GBASE;
         } else if (url.contains(":gbasedbt-sqli:") || url.contains(":informix-sqli:")) {
             return DbType.GBASE_8S;
-        } else if (url.contains(":gbase8s-pg:")){
+        } else if (url.contains(":gbase8s-pg:")) {
             return DbType.GBASE8S_PG;
         } else if (url.contains(":gbase8c:")) {
             return DbType.GBASE_8C;
@@ -145,6 +143,16 @@ public class JdbcUtils {
             return DbType.TRINO;
         } else if (url.contains(":presto:")) {
             return DbType.PRESTO;
+        } else if (url.contains(":derby:")) {
+            return DbType.DERBY;
+        } else if (url.contains(":vastbase:")) {
+            return DbType.VASTBASE;
+        } else if (url.contains(":goldendb:")) {
+            return DbType.GOLDENDB;
+        } else if (url.contains(":duckdb:")) {
+            return DbType.DUCKDB;
+        } else if (url.contains(":yasdb:")) {
+            return DbType.YASDB;
         } else {
             logger.warn("The jdbcUrl is " + jdbcUrl + ", Mybatis Plus Cannot Read Database type or The Database's Not Supported!");
             return DbType.OTHER;

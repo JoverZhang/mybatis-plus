@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.baomidou.mybatisplus.core.batch;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.enums.SqlMethod;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Constants;
 import com.baomidou.mybatisplus.core.toolkit.StringPool;
 import org.apache.ibatis.executor.BatchResult;
@@ -26,6 +27,7 @@ import org.apache.ibatis.session.SqlSessionFactory;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,11 +60,20 @@ public class MybatisBatch<T> {
 
     private final SqlSessionFactory sqlSessionFactory;
 
-    private final List<T> dataList;
+    private final Collection<T> dataList;
 
-    public MybatisBatch(SqlSessionFactory sqlSessionFactory, List<T> dataList) {
+    private final int batchSize;
+
+    public MybatisBatch(SqlSessionFactory sqlSessionFactory, Collection<T> dataList) {
         this.sqlSessionFactory = sqlSessionFactory;
         this.dataList = dataList;
+        this.batchSize = Constants.DEFAULT_BATCH_SIZE;
+    }
+
+    public MybatisBatch(SqlSessionFactory sqlSessionFactory, Collection<T> dataList, int batchSize) {
+        this.sqlSessionFactory = sqlSessionFactory;
+        this.dataList = dataList;
+        this.batchSize = batchSize;
     }
 
     /**
@@ -128,13 +139,17 @@ public class MybatisBatch<T> {
      * @return 批处理结果
      */
     public List<BatchResult> execute(boolean autoCommit, String statement, ParameterConvert<T> parameterConvert) {
+        List<BatchResult> resultList = new ArrayList<>(dataList.size());
         try (SqlSession sqlSession = sqlSessionFactory.openSession(ExecutorType.BATCH, autoCommit)) {
-            for (T data : dataList) {
-                sqlSession.update(statement, toParameter(parameterConvert, data));
-            }
-            List<BatchResult> resultList = sqlSession.flushStatements();
-            if(!autoCommit) {
-                sqlSession.commit();
+            List<List<T>> split = CollectionUtils.split(dataList, batchSize);
+            for (List<T> splitedList : split) {
+                for (T data : splitedList) {
+                    sqlSession.update(statement, toParameter(parameterConvert, data));
+                }
+                resultList.addAll(sqlSession.flushStatements());
+                if (!autoCommit) {
+                    sqlSession.commit();
+                }
             }
             return resultList;
         }

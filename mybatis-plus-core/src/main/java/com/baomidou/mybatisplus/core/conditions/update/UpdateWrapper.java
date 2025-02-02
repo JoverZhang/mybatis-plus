@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,13 @@ package com.baomidou.mybatisplus.core.conditions.update;
 import com.baomidou.mybatisplus.core.conditions.AbstractWrapper;
 import com.baomidou.mybatisplus.core.conditions.SharedString;
 import com.baomidou.mybatisplus.core.conditions.segments.MergeSegments;
+import com.baomidou.mybatisplus.core.exceptions.MybatisPlusException;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Constants;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.core.toolkit.sql.SqlInjectionUtils;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -66,6 +69,28 @@ public class UpdateWrapper<T> extends AbstractWrapper<T, String, UpdateWrapper<T
         this.sqlFirst = sqlFirst;
     }
 
+
+    /**
+     * 检查 SQL 注入过滤
+     */
+    private boolean checkSqlInjection;
+
+    /**
+     * 开启检查 SQL 注入
+     */
+    public UpdateWrapper<T> checkSqlInjection() {
+        this.checkSqlInjection = true;
+        return this;
+    }
+
+    @Override
+    protected String columnToString(String column) {
+        if (checkSqlInjection && SqlInjectionUtils.check(column)) {
+            throw new MybatisPlusException("Discovering SQL injection column: " + column);
+        }
+        return column;
+    }
+
     @Override
     public String getSqlSet() {
         if (CollectionUtils.isEmpty(sqlSet)) {
@@ -84,10 +109,23 @@ public class UpdateWrapper<T> extends AbstractWrapper<T, String, UpdateWrapper<T
 
     @Override
     public UpdateWrapper<T> setSql(boolean condition, String setSql, Object... params) {
-        if (condition && StringUtils.isNotBlank(setSql)) {
+        return maybeDo(condition && StringUtils.isNotBlank(setSql), () -> {
             sqlSet.add(formatSqlMaybeWithParam(setSql, params));
-        }
-        return typedThis;
+        });
+    }
+
+    @Override
+    public UpdateWrapper<T> setIncrBy(boolean condition, String column, Number val) {
+        return maybeDo(condition, () -> {
+            sqlSet.add(String.format("%s=%s + %s", column, column, val instanceof BigDecimal ? ((BigDecimal) val).toPlainString() : val));
+        });
+    }
+
+    @Override
+    public UpdateWrapper<T> setDecrBy(boolean condition, String column, Number val) {
+        return maybeDo(condition, () -> {
+            sqlSet.add(String.format("%s=%s - %s", column, column, val instanceof BigDecimal ? ((BigDecimal) val).toPlainString() : val));
+        });
     }
 
     /**

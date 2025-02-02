@@ -17,11 +17,7 @@ import org.apache.ibatis.mapping.ResultMap;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.lang.annotation.Documented;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.List;
@@ -75,6 +71,24 @@ class TableInfoHelperTest {
         private String sex;
 
         private String name;
+    }
+
+    @Test
+    void testExcludeProperty() {
+        TableInfo tableInfo = TableInfoHelper.initTableInfo(new MapperBuilderAssistant(new MybatisConfiguration(), ""), ModelThree.class);
+        assertThat(tableInfo.havePK()).isTrue();
+        assertThat(tableInfo.getKeyProperty()).isEqualTo("id");
+        assertThat(tableInfo.getFieldList().size()).isEqualTo(2);
+        assertThat(tableInfo.getFieldList()).noneMatch(i -> i.getProperty().equals("test"));
+
+        tableInfo = TableInfoHelper.initTableInfo(new MapperBuilderAssistant(new MybatisConfiguration(), ""), ModelFour.class);
+        assertThat(tableInfo.getFieldList().size()).isEqualTo(2);
+        assertThat(tableInfo.getFieldList()).noneMatch(i -> i.getProperty().equals("test"));
+
+        tableInfo = TableInfoHelper.initTableInfo(new MapperBuilderAssistant(new MybatisConfiguration(), ""), ModelFour2.class);
+        assertThat(tableInfo.getFieldList().size()).isEqualTo(1);
+        assertThat(tableInfo.getFieldList()).anyMatch(i -> i.getProperty().equals("name"));
+        assertThat(tableInfo.havePK()).isTrue();
     }
 
     @Documented
@@ -151,17 +165,14 @@ class TableInfoHelperTest {
         assertThat(TableInfoHelper.isExistTableId(ModelTwo.class, Arrays.asList(ModelTwo.class.getDeclaredFields()))).isFalse();
     }
 
-    @Test
-    void testExcludeProperty() {
-        TableInfo tableInfo = TableInfoHelper.initTableInfo(new MapperBuilderAssistant(new MybatisConfiguration(), ""), ModelThree.class);
-        assertThat(tableInfo.havePK()).isTrue();
-        assertThat(tableInfo.getKeyProperty()).isEqualTo("id");
-        assertThat(tableInfo.getFieldList().size()).isEqualTo(2);
-        assertThat(tableInfo.getFieldList()).noneMatch(i -> i.getProperty().equals("test"));
+    @Data
+    @EqualsAndHashCode(callSuper = true)
+    @TableName(properties = {"id", "name"}, excludeProperty = {"sex", "test"})
+    private static class ModelFour2 extends BaseModel {
 
-        tableInfo = TableInfoHelper.initTableInfo(new MapperBuilderAssistant(new MybatisConfiguration(), ""), ModelFour.class);
-        assertThat(tableInfo.getFieldList().size()).isEqualTo(2);
-        assertThat(tableInfo.getFieldList()).noneMatch(i -> i.getProperty().equals("test"));
+        private String sex;
+
+        private String name;
     }
 
     @Test
@@ -300,7 +311,6 @@ class TableInfoHelperTest {
     }
 
 
-
     @Test
     void testTableAutoResultMap() {
         MybatisConfiguration configuration = new MybatisConfiguration();
@@ -314,8 +324,8 @@ class TableInfoHelperTest {
     }
 
     @Data
-    @TableName(value = "xxx", autoResultMap = true )
-    private static class AutoResultMapTable{
+    @TableName(value = "xxx", autoResultMap = true)
+    private static class AutoResultMapTable {
 
         @TableId("`id`")
         private Long id;

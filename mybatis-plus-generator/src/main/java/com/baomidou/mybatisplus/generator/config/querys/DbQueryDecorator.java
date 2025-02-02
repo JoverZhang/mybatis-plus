@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.baomidou.mybatisplus.generator.config.DataSourceConfig;
 import com.baomidou.mybatisplus.generator.config.IDbQuery;
 import com.baomidou.mybatisplus.generator.config.StrategyConfig;
 import com.baomidou.mybatisplus.generator.config.po.LikeTable;
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,6 +48,7 @@ import java.util.stream.Collectors;
  */
 public class DbQueryDecorator extends AbstractDbQuery {
     private final IDbQuery dbQuery;
+    @Getter
     private final Connection connection;
     private final DbType dbType;
     private final StrategyConfig strategyConfig;
@@ -65,7 +67,8 @@ public class DbQueryDecorator extends AbstractDbQuery {
     @Override
     public String tablesSql() {
         String tablesSql = dbQuery.tablesSql();
-        if (DbType.POSTGRE_SQL == dbType || DbType.KINGBASE_ES == dbType || DbType.DB2 == dbType || DbType.ORACLE == dbType) {
+        if (DbType.POSTGRE_SQL == dbType || DbType.KINGBASE_ES == dbType
+            || DbType.DB2 == dbType || DbType.ORACLE == dbType || DbType.DM == dbType) {
             tablesSql = String.format(tablesSql, this.schema);
         }
         if (strategyConfig.isEnableSqlFilter()) {
@@ -108,7 +111,7 @@ public class DbQueryDecorator extends AbstractDbQuery {
             tableFieldsSql = String.format(tableFieldsSql.replace("#schema", this.schema), tableName, tableName.toUpperCase());
         } else if (DbType.DM == dbType) {
             tableName = tableName.toUpperCase();
-            tableFieldsSql = String.format(tableFieldsSql, tableName,this.schema);
+            tableFieldsSql = String.format(tableFieldsSql, this.schema, tableName);
         } else if (DbType.POSTGRE_SQL == dbType) {
             tableFieldsSql = String.format(tableFieldsSql, tableName, tableName, tableName,this.schema);
         } else {
@@ -163,6 +166,11 @@ public class DbQueryDecorator extends AbstractDbQuery {
         return dbQuery.fieldCustom();
     }
 
+    @Override
+    public String primaryKeySql(DataSourceConfig dataSourceConfig, String tableName) {
+        return dbQuery.primaryKeySql(dataSourceConfig, tableName);
+    }
+
     public Map<String, Object> getCustomFields(ResultSet resultSet) {
         String[] fcs = this.fieldCustom();
         if (null != fcs) {
@@ -184,7 +192,6 @@ public class DbQueryDecorator extends AbstractDbQuery {
      *
      * @param sql      执行SQL
      * @param consumer 结果处理
-     * @throws SQLException
      */
     public void execute(String sql, Consumer<ResultSetWrapper> consumer) throws SQLException {
         logger.debug("执行SQL:{}", sql);
@@ -201,10 +208,6 @@ public class DbQueryDecorator extends AbstractDbQuery {
         }
     }
 
-    public Connection getConnection() {
-        return connection;
-    }
-
     public void closeConnection() {
         Optional.ofNullable(connection).ifPresent((con) -> {
             try {
@@ -219,6 +222,7 @@ public class DbQueryDecorator extends AbstractDbQuery {
 
         private final IDbQuery dbQuery;
 
+        @Getter
         private final ResultSet resultSet;
 
         private final DbType dbType;
@@ -227,10 +231,6 @@ public class DbQueryDecorator extends AbstractDbQuery {
             this.resultSet = resultSet;
             this.dbQuery = dbQuery;
             this.dbType = dbType;
-        }
-
-        public ResultSet getResultSet() {
-            return resultSet;
         }
 
         public String getStringResult(String columnLabel) {

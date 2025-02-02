@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.baomidou.mybatisplus.generator.engine;
 import com.baomidou.mybatisplus.generator.config.ConstVal;
 import com.baomidou.mybatisplus.generator.config.builder.ConfigBuilder;
 import com.jfinal.template.Engine;
+import com.jfinal.template.Template;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedWriter;
@@ -38,10 +39,15 @@ public class EnjoyTemplateEngine extends AbstractTemplateEngine {
 
     @Override
     public @NotNull AbstractTemplateEngine init(@NotNull ConfigBuilder configBuilder) {
-        engine = Engine.createIfAbsent("mybatis-plus-generator", e -> {
-            e.setToClassPathSourceFactory();
-        });
+        engine = Engine.createIfAbsent("mybatis-plus-generator",
+            Engine::setToClassPathSourceFactory);
         return this;
+    }
+
+    @Override
+    public String writer(@NotNull Map<String, Object> objectMap, @NotNull String templateName, @NotNull String templateString) throws Exception {
+        Template template = engine.getTemplateByString(templateString);
+        return template.renderToString(objectMap);
     }
 
     @Override
@@ -52,7 +58,7 @@ public class EnjoyTemplateEngine extends AbstractTemplateEngine {
              BufferedWriter writer = new BufferedWriter(ow)) {
             writer.append(str);
         }
-        LOGGER.debug("模板:" + templatePath + ";  文件:" + outputFile);
+        LOGGER.debug("模板:{};  文件:{}", templatePath, outputFile);
     }
 
     @Override

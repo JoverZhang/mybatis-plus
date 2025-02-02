@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.baomidou.mybatisplus.generator.config;
 
 import com.baomidou.mybatisplus.annotation.DbType;
+import com.baomidou.mybatisplus.core.toolkit.ClassUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.generator.config.converts.MySqlTypeConvert;
 import com.baomidou.mybatisplus.generator.config.converts.TypeConverts;
@@ -47,6 +48,7 @@ import java.util.Properties;
  * @since 2016/8/30
  */
 public class DataSourceConfig {
+
     protected final Logger logger = LoggerFactory.getLogger(DataSourceConfig.class);
 
     private DataSourceConfig() {
@@ -127,6 +129,13 @@ public class DataSourceConfig {
     private ITypeConvertHandler typeConvertHandler;
 
     /**
+     * 驱动全类名
+     *
+     * @since 3.5.8
+     */
+    private String driverClassName;
+
+    /**
      * 获取数据库查询
      */
     @NotNull
@@ -135,8 +144,7 @@ public class DataSourceConfig {
             DbType dbType = getDbType();
             DbQueryRegistry dbQueryRegistry = new DbQueryRegistry();
             // 默认 MYSQL
-            dbQuery = Optional.ofNullable(dbQueryRegistry.getDbQuery(dbType))
-                .orElseGet(() -> dbQueryRegistry.getDbQuery(DbType.MYSQL));
+            dbQuery = Optional.ofNullable(dbQueryRegistry.getDbQuery(dbType)).orElseGet(() -> dbQueryRegistry.getDbQuery(DbType.MYSQL));
         }
         return dbQuery;
     }
@@ -238,6 +246,13 @@ public class DataSourceConfig {
                         // 使用元数据查询方式时，有些数据库需要增加属性才能读取注释
                         this.processProperties(properties);
                         this.connection = DriverManager.getConnection(url, properties);
+                        if (StringUtils.isBlank(this.schemaName)) {
+                            try {
+                                this.schemaName = connection.getSchema();
+                            } catch (Exception exception) {
+                                // ignore 老古董1.7以下的驱动不支持.
+                            }
+                        }
                     }
                 }
             }
@@ -321,6 +336,11 @@ public class DataSourceConfig {
     @Nullable
     public ITypeConvertHandler getTypeConvertHandler() {
         return typeConvertHandler;
+    }
+
+    @Nullable
+    public String getDriverClassName() {
+        return driverClassName;
     }
 
     /**
@@ -458,6 +478,19 @@ public class DataSourceConfig {
             return this;
         }
 
+        /**
+         * 指定连接驱动
+         * <li>对于一些老驱动(低于4.0规范)没有实现SPI不能自动加载的,手动指定加载让其初始化注册到驱动列表去.</li>
+         *
+         * @param className 驱动全类名
+         * @return this
+         * @since 3.5.8
+         */
+        public Builder driverClassName(@NotNull String className) {
+            ClassUtils.toClassConfident(className);
+            this.dataSourceConfig.driverClassName = className;
+            return this;
+        }
 
         /**
          * 构建数据库配置

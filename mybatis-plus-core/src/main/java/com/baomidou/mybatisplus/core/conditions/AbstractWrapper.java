@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.baomidou.mybatisplus.core.enums.SqlLike;
 import com.baomidou.mybatisplus.core.toolkit.*;
 import com.baomidou.mybatisplus.core.toolkit.sql.SqlScriptUtils;
 import com.baomidou.mybatisplus.core.toolkit.sql.SqlUtils;
-import com.baomidou.mybatisplus.core.toolkit.sql.StringEscape;
 import lombok.Getter;
 
 import java.util.*;
@@ -310,6 +309,12 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
     }
 
     @Override
+    public Children eqSql(boolean condition, R column, String eqValue) {
+        return maybeDo(condition, () -> appendSqlSegments(columnToSqlSegment(column), EQ,
+            () -> String.format("(%s)", eqValue)));
+    }
+
+    @Override
     public Children inSql(boolean condition, R column, String inValue) {
         return maybeDo(condition, () -> appendSqlSegments(columnToSqlSegment(column), IN,
             () -> String.format("(%s)", inValue)));
@@ -378,7 +383,7 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
             }
             if (CollectionUtils.isNotEmpty(columns)) {
                 columns.forEach(c -> appendSqlSegments(ORDER_BY,
-                        columnToSqlSegment(c), mode));
+                    columnToSqlSegment(c), mode));
             }
         });
     }

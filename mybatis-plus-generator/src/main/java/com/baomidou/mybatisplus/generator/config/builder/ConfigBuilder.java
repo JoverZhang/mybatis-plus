@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package com.baomidou.mybatisplus.generator.config.builder;
 import com.baomidou.mybatisplus.generator.config.*;
 import com.baomidou.mybatisplus.generator.config.po.TableInfo;
 import com.baomidou.mybatisplus.generator.query.IDatabaseQuery;
+import lombok.Getter;
+import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +37,10 @@ public class ConfigBuilder {
 
     /**
      * 模板路径配置信息
+     *
+     * @deprecated 3.5.6
      */
+    @Deprecated
     private final TemplateConfig templateConfig;
 
     /**
@@ -85,6 +90,14 @@ public class ConfigBuilder {
     private final IDatabaseQuery databaseQuery;
 
     /**
+     * 资源加载器
+     * @since 3.5.9
+     */
+    @Getter
+    @Setter
+    private TemplateLoadWay templateLoadWay = TemplateLoadWay.FILE;
+
+    /**
      * 在构造器中处理配置
      *
      * @param packageConfig    包配置
@@ -102,7 +115,7 @@ public class ConfigBuilder {
         this.templateConfig = Optional.ofNullable(templateConfig).orElseGet(GeneratorBuilder::templateConfig);
         this.packageConfig = Optional.ofNullable(packageConfig).orElseGet(GeneratorBuilder::packageConfig);
         this.injectionConfig = Optional.ofNullable(injectionConfig).orElseGet(GeneratorBuilder::injectionConfig);
-        this.pathInfo.putAll(new PathInfoHandler(this.globalConfig, this.templateConfig, this.packageConfig).getPathInfo());
+        this.pathInfo.putAll(new PathInfoHandler(this.injectionConfig, this.globalConfig, this.strategyConfig, this.packageConfig).getPathInfo());
         Class<? extends IDatabaseQuery> databaseQueryClass = dataSourceConfig.getDatabaseQueryClass();
         try {
             Constructor<? extends IDatabaseQuery> declaredConstructor = databaseQueryClass.getDeclaredConstructor(this.getClass());
@@ -141,7 +154,14 @@ public class ConfigBuilder {
         return this;
     }
 
+    /**
+     * 获取模板配置
+     *
+     * @return 模板配置
+     * @deprecated 3.5.6 {@link #strategyConfig}
+     */
     @NotNull
+    @Deprecated
     public TemplateConfig getTemplateConfig() {
         return templateConfig;
     }

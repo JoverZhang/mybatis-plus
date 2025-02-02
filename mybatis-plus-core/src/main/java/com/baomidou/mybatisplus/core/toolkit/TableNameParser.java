@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,9 @@ public final class TableNameParser {
     private static final String TOKEN_SET = "set";
     private static final String TOKEN_OF = "of";
     private static final String TOKEN_DUAL = "dual";
+    private static final String IGNORE = "ignore";
     private static final String TOKEN_DELETE = "delete";
+    private static final String TOKEN_UPDATE = "update";
     private static final String TOKEN_CREATE = "create";
     private static final String TOKEN_INDEX = "index";
 
@@ -107,6 +109,10 @@ public final class TableNameParser {
                 } else if (concerned.contains(current.toLowerCase())) {
                     if (hasMoreTokens(tokens, index)) {
                         SqlToken next = tokens.get(index++);
+                        if (TOKEN_UPDATE.equalsIgnoreCase(current)
+                            && IGNORE.equalsIgnoreCase(next.getValue())) {
+                            next = tokens.get(index++);
+                        }
                         visitNameToken(next, visitor);
                     }
                 }

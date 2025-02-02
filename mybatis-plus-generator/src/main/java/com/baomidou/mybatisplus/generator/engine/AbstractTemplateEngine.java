@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,7 @@ package com.baomidou.mybatisplus.generator.engine;
 import com.baomidou.mybatisplus.core.toolkit.StringPool;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.generator.config.*;
-import com.baomidou.mybatisplus.generator.config.builder.ConfigBuilder;
-import com.baomidou.mybatisplus.generator.config.builder.CustomFile;
+import com.baomidou.mybatisplus.generator.config.builder.*;
 import com.baomidou.mybatisplus.generator.config.po.TableInfo;
 import com.baomidou.mybatisplus.generator.util.FileUtils;
 import com.baomidou.mybatisplus.generator.util.RuntimeUtils;
@@ -90,11 +89,11 @@ public abstract class AbstractTemplateEngine {
     protected void outputEntity(@NotNull TableInfo tableInfo, @NotNull Map<String, Object> objectMap) {
         String entityName = tableInfo.getEntityName();
         String entityPath = getPathInfo(OutputFile.entity);
-        if (StringUtils.isNotBlank(entityName) && StringUtils.isNotBlank(entityPath)) {
-            getTemplateFilePath(template -> template.getEntity(getConfigBuilder().getGlobalConfig().isKotlin())).ifPresent((entity) -> {
-                String entityFile = String.format((entityPath + File.separator + "%s" + suffixJavaOrKt()), entityName);
-                outputFile(getOutputFile(entityFile, OutputFile.entity), objectMap, entity, getConfigBuilder().getStrategyConfig().entity().isFileOverride());
-            });
+        Entity entity = this.getConfigBuilder().getStrategyConfig().entity();
+        GlobalConfig globalConfig = configBuilder.getGlobalConfig();
+        if (entity.isGenerate()) {
+            String entityFile = String.format((entityPath + File.separator + "%s" + suffixJavaOrKt()), entityName);
+            outputFile(getOutputFile(entityFile, OutputFile.entity), objectMap, templateFilePath(globalConfig.isKotlin() ? entity.getKotlinTemplate() : entity.getJavaTemplate()), getConfigBuilder().getStrategyConfig().entity().isFileOverride());
         }
     }
 
@@ -113,19 +112,16 @@ public abstract class AbstractTemplateEngine {
         // MpMapper.java
         String entityName = tableInfo.getEntityName();
         String mapperPath = getPathInfo(OutputFile.mapper);
-        if (StringUtils.isNotBlank(tableInfo.getMapperName()) && StringUtils.isNotBlank(mapperPath)) {
-            getTemplateFilePath(TemplateConfig::getMapper).ifPresent(mapper -> {
-                String mapperFile = String.format((mapperPath + File.separator + tableInfo.getMapperName() + suffixJavaOrKt()), entityName);
-                outputFile(getOutputFile(mapperFile, OutputFile.mapper), objectMap, mapper, getConfigBuilder().getStrategyConfig().mapper().isFileOverride());
-            });
+        Mapper mapper = this.getConfigBuilder().getStrategyConfig().mapper();
+        if (mapper.isGenerateMapper()) {
+            String mapperFile = String.format((mapperPath + File.separator + tableInfo.getMapperName() + suffixJavaOrKt()), entityName);
+            outputFile(getOutputFile(mapperFile, OutputFile.mapper), objectMap, templateFilePath(mapper.getMapperTemplatePath()), getConfigBuilder().getStrategyConfig().mapper().isFileOverride());
         }
         // MpMapper.xml
         String xmlPath = getPathInfo(OutputFile.xml);
-        if (StringUtils.isNotBlank(tableInfo.getXmlName()) && StringUtils.isNotBlank(xmlPath)) {
-            getTemplateFilePath(TemplateConfig::getXml).ifPresent(xml -> {
-                String xmlFile = String.format((xmlPath + File.separator + tableInfo.getXmlName() + ConstVal.XML_SUFFIX), entityName);
-                outputFile(getOutputFile(xmlFile, OutputFile.xml), objectMap, xml, getConfigBuilder().getStrategyConfig().mapper().isFileOverride());
-            });
+        if (mapper.isGenerateMapperXml()) {
+            String xmlFile = String.format((xmlPath + File.separator + tableInfo.getXmlName() + ConstVal.XML_SUFFIX), entityName);
+            outputFile(getOutputFile(xmlFile, OutputFile.xml), objectMap, templateFilePath(mapper.getMapperXmlTemplatePath()), getConfigBuilder().getStrategyConfig().mapper().isFileOverride());
         }
     }
 
@@ -140,22 +136,17 @@ public abstract class AbstractTemplateEngine {
         // IMpService.java
         String entityName = tableInfo.getEntityName();
         // 判断是否要生成service接口
-        if (tableInfo.isServiceInterface()) {
+        Service service = this.getConfigBuilder().getStrategyConfig().service();
+        if (service.isGenerateService()) {
             String servicePath = getPathInfo(OutputFile.service);
-            if (StringUtils.isNotBlank(tableInfo.getServiceName()) && StringUtils.isNotBlank(servicePath)) {
-                getTemplateFilePath(TemplateConfig::getService).ifPresent(service -> {
-                    String serviceFile = String.format((servicePath + File.separator + tableInfo.getServiceName() + suffixJavaOrKt()), entityName);
-                    outputFile(getOutputFile(serviceFile, OutputFile.service), objectMap, service, getConfigBuilder().getStrategyConfig().service().isFileOverride());
-                });
-            }
+            String serviceFile = String.format((servicePath + File.separator + tableInfo.getServiceName() + suffixJavaOrKt()), entityName);
+            outputFile(getOutputFile(serviceFile, OutputFile.service), objectMap, templateFilePath(service.getServiceTemplate()), getConfigBuilder().getStrategyConfig().service().isFileOverride());
         }
         // MpServiceImpl.java
         String serviceImplPath = getPathInfo(OutputFile.serviceImpl);
-        if (StringUtils.isNotBlank(tableInfo.getServiceImplName()) && StringUtils.isNotBlank(serviceImplPath)) {
-            getTemplateFilePath(TemplateConfig::getServiceImpl).ifPresent(serviceImpl -> {
-                String implFile = String.format((serviceImplPath + File.separator + tableInfo.getServiceImplName() + suffixJavaOrKt()), entityName);
-                outputFile(getOutputFile(implFile, OutputFile.serviceImpl), objectMap, serviceImpl, getConfigBuilder().getStrategyConfig().service().isFileOverride());
-            });
+        if (service.isGenerateServiceImpl()) {
+            String implFile = String.format((serviceImplPath + File.separator + tableInfo.getServiceImplName() + suffixJavaOrKt()), entityName);
+            outputFile(getOutputFile(implFile, OutputFile.serviceImpl), objectMap, templateFilePath(service.getServiceImplTemplate()), getConfigBuilder().getStrategyConfig().service().isFileOverride());
         }
     }
 
@@ -168,13 +159,12 @@ public abstract class AbstractTemplateEngine {
      */
     protected void outputController(@NotNull TableInfo tableInfo, @NotNull Map<String, Object> objectMap) {
         // MpController.java
+        Controller controller = this.getConfigBuilder().getStrategyConfig().controller();
         String controllerPath = getPathInfo(OutputFile.controller);
-        if (StringUtils.isNotBlank(tableInfo.getControllerName()) && StringUtils.isNotBlank(controllerPath)) {
-            getTemplateFilePath(TemplateConfig::getController).ifPresent(controller -> {
-                String entityName = tableInfo.getEntityName();
-                String controllerFile = String.format((controllerPath + File.separator + tableInfo.getControllerName() + suffixJavaOrKt()), entityName);
-                outputFile(getOutputFile(controllerFile, OutputFile.controller), objectMap, controller, getConfigBuilder().getStrategyConfig().controller().isFileOverride());
-            });
+        if (controller.isGenerate()) {
+            String entityName = tableInfo.getEntityName();
+            String controllerFile = String.format((controllerPath + File.separator + tableInfo.getControllerName() + suffixJavaOrKt()), entityName);
+            outputFile(getOutputFile(controllerFile, OutputFile.controller), objectMap, templateFilePath(controller.getTemplatePath()), getConfigBuilder().getStrategyConfig().controller().isFileOverride());
         }
     }
 
@@ -209,8 +199,10 @@ public abstract class AbstractTemplateEngine {
      * @param function function
      * @return 模板路径
      * @since 3.5.0
+     * @deprecated 3.5.6
      */
     @NotNull
+    @Deprecated
     protected Optional<String> getTemplateFilePath(@NotNull Function<TemplateConfig, String> function) {
         TemplateConfig templateConfig = getConfigBuilder().getTemplateConfig();
         String filePath = function.apply(templateConfig);
@@ -263,6 +255,16 @@ public abstract class AbstractTemplateEngine {
     }
 
     /**
+     * 将模板转化成为字符串
+     *
+     * @param objectMap      渲染对象 MAP 信息
+     * @param templateName   模板名称
+     * @param templateString 模板字符串
+     * @since 3.5.0
+     */
+    public abstract String writer(@NotNull Map<String, Object> objectMap, @NotNull String templateName, @NotNull String templateString) throws Exception;
+
+    /**
      * 将模板转化成为文件
      *
      * @param objectMap    渲染对象 MAP 信息
@@ -298,9 +300,22 @@ public abstract class AbstractTemplateEngine {
      */
     @NotNull
     public Map<String, Object> getObjectMap(@NotNull ConfigBuilder config, @NotNull TableInfo tableInfo) {
+        Map<String, Object> objectMap = new HashMap<>();
         StrategyConfig strategyConfig = config.getStrategyConfig();
+        // 启用 schema 处理逻辑
+        String schemaName = "";
+        if (strategyConfig.isEnableSchema()) {
+            // 存在 schemaName 设置拼接 . 组合表名
+            schemaName = config.getDataSourceConfig().getSchemaName();
+            if (StringUtils.isNotBlank(schemaName)) {
+                tableInfo.setSchemaName(schemaName);
+                schemaName += ".";
+                tableInfo.setConvert(true);
+            }
+        }
+        objectMap.put("schemaName", schemaName);
         Map<String, Object> controllerData = strategyConfig.controller().renderData(tableInfo);
-        Map<String, Object> objectMap = new HashMap<>(controllerData);
+        objectMap.putAll(controllerData);
         Map<String, Object> mapperData = strategyConfig.mapper().renderData(tableInfo);
         objectMap.putAll(mapperData);
         Map<String, Object> serviceData = strategyConfig.service().renderData(tableInfo);
@@ -308,24 +323,13 @@ public abstract class AbstractTemplateEngine {
         Map<String, Object> entityData = strategyConfig.entity().renderData(tableInfo);
         objectMap.putAll(entityData);
         objectMap.put("config", config);
-        objectMap.put("package", config.getPackageConfig().getPackageInfo());
+        objectMap.put("package", config.getPackageConfig().getPackageInfo(config.getInjectionConfig()));
         GlobalConfig globalConfig = config.getGlobalConfig();
         objectMap.put("author", globalConfig.getAuthor());
         objectMap.put("kotlin", globalConfig.isKotlin());
         objectMap.put("swagger", globalConfig.isSwagger());
         objectMap.put("springdoc", globalConfig.isSpringdoc());
         objectMap.put("date", globalConfig.getCommentDate());
-        // 启用 schema 处理逻辑
-        String schemaName = "";
-        if (strategyConfig.isEnableSchema()) {
-            // 存在 schemaName 设置拼接 . 组合表名
-            schemaName = config.getDataSourceConfig().getSchemaName();
-            if (StringUtils.isNotBlank(schemaName)) {
-                schemaName += ".";
-                tableInfo.setConvert(true);
-            }
-        }
-        objectMap.put("schemaName", schemaName);
         objectMap.put("table", tableInfo);
         objectMap.put("entity", tableInfo.getEntityName());
         return objectMap;

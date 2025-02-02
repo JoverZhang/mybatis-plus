@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,15 @@ package com.baomidou.mybatisplus.generator.config.po;
 
 import com.baomidou.mybatisplus.annotation.*;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.baomidou.mybatisplus.extension.activerecord.Model;
 import com.baomidou.mybatisplus.generator.config.GlobalConfig;
 import com.baomidou.mybatisplus.generator.config.StrategyConfig;
 import com.baomidou.mybatisplus.generator.config.builder.ConfigBuilder;
 import com.baomidou.mybatisplus.generator.config.builder.Entity;
+import com.baomidou.mybatisplus.generator.config.builder.Service;
 import com.baomidou.mybatisplus.generator.config.rules.IColumnType;
+import com.baomidou.mybatisplus.generator.jdbc.DatabaseMetaDataWrapper;
 import lombok.Getter;
+import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
@@ -42,11 +44,13 @@ public class TableInfo {
     /**
      * 策略配置
      */
+    @Getter
     private final StrategyConfig strategyConfig;
 
     /**
      * 全局配置信息
      */
+    @Getter
     private final GlobalConfig globalConfig;
 
     /**
@@ -135,6 +139,30 @@ public class TableInfo {
     private final Entity entity;
 
     /**
+     * 索引信息
+     *
+     * @since 3.5.10
+     */
+    @Setter
+    @Getter
+    private List<DatabaseMetaDataWrapper.Index> indexList;
+
+    /**
+     * 字段信息
+     *
+     * @since 3.5.10
+     */
+    @Getter
+    private final Map<String, TableField> tableFieldMap = new HashMap<>();
+
+    /**
+     * @since 3.5.10
+     */
+    @Getter
+    @Setter
+    private String schemaName;
+
+    /**
      * 构造方法
      *
      * @param configBuilder 配置构建
@@ -170,7 +198,6 @@ public class TableInfo {
      */
     public TableInfo setEntityName(@NotNull String entityName) {
         this.entityName = entityName;
-        //TODO 先放置在这里
         setConvert();
         return this;
     }
@@ -185,7 +212,9 @@ public class TableInfo {
         if (entity.matchIgnoreColumns(field.getColumnName())) {
             // 忽略字段不在处理
             return;
-        } else if (entity.matchSuperEntityColumns(field.getColumnName())) {
+        }
+        tableFieldMap.put(field.getName(), field);
+        if (entity.matchSuperEntityColumns(field.getColumnName())) {
             this.commonFields.add(field);
         } else {
             this.fields.add(field);
@@ -210,7 +239,6 @@ public class TableInfo {
      * 转换filed实体为 xml mapper 中的 base column 字符串信息
      */
     public String getFieldNames() {
-        //TODO 感觉这个也啥必要,不打算公开set方法了
         if (StringUtils.isBlank(fieldNames)) {
             this.fieldNames = this.fields.stream().map(TableField::getColumnName).collect(Collectors.joining(", "));
         }
@@ -230,7 +258,7 @@ public class TableInfo {
         } else {
             if (entity.isActiveRecord()) {
                 // 无父类开启 AR 模式
-                this.importPackages.add(Model.class.getCanonicalName());
+                this.importPackages.add("com.baomidou.mybatisplus.extension.activerecord.Model");
             }
         }
         if (entity.isSerialVersionUID() || entity.isActiveRecord()) {
@@ -295,8 +323,8 @@ public class TableInfo {
     }
 
     public TableInfo setComment(String comment) {
-        //TODO 暂时挪动到这
-        this.comment = this.globalConfig.isSwagger()
+        //TODO 待重构此处
+        this.comment = (this.globalConfig.isSwagger() || this.globalConfig.isSpringdoc())
             && StringUtils.isNotBlank(comment) ? comment.replace("\"", "\\\"") : comment;
         return this;
     }
@@ -328,7 +356,9 @@ public class TableInfo {
 
     /**
      * 获取是否生成service接口
+     * @deprecated {@link Service.Builder#disableService()}
      */
+    @Deprecated
     public boolean isServiceInterface() {
         return globalConfig.isServiceInterface();
     }

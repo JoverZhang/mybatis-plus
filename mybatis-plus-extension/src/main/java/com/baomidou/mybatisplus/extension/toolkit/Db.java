@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,14 @@
 package com.baomidou.mybatisplus.extension.toolkit;
 
 import com.baomidou.mybatisplus.core.conditions.AbstractWrapper;
-import com.baomidou.mybatisplus.core.enums.SqlMethod;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.metadata.TableInfo;
 import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
-import com.baomidou.mybatisplus.core.toolkit.*;
+import com.baomidou.mybatisplus.core.toolkit.Assert;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.core.toolkit.Constants;
+import com.baomidou.mybatisplus.core.toolkit.ExceptionUtils;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.conditions.query.QueryChainWrapper;
@@ -28,8 +31,7 @@ import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWra
 import com.baomidou.mybatisplus.extension.conditions.update.UpdateChainWrapper;
 import com.baomidou.mybatisplus.extension.kotlin.KtQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.kotlin.KtUpdateChainWrapper;
-import com.baomidou.mybatisplus.extension.service.IService;
-import org.apache.ibatis.binding.MapperMethod;
+import org.apache.ibatis.executor.BatchResult;
 import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
 
@@ -70,7 +72,7 @@ public class Db {
      * @param entityList 实体对象集合
      */
     public static <T> boolean saveBatch(Collection<T> entityList) {
-        return saveBatch(entityList, IService.DEFAULT_BATCH_SIZE);
+        return saveBatch(entityList, Constants.DEFAULT_BATCH_SIZE);
     }
 
     /**
@@ -84,9 +86,8 @@ public class Db {
             return false;
         }
         Class<T> entityClass = getEntityClass(entityList);
-        Class<?> mapperClass = ClassUtils.toClassConfident(getTableInfo(entityClass).getCurrentNamespace());
-        String sqlStatement = SqlHelper.getSqlStatement(mapperClass, SqlMethod.INSERT_ONE);
-        return SqlHelper.executeBatch(entityClass, log, entityList, batchSize, (sqlSession, entity) -> sqlSession.insert(sqlStatement, entity));
+        List<BatchResult> batchResults = SqlHelper.execute(entityClass, baseMapper -> baseMapper.insert(entityList, batchSize));
+        return SqlHelper.retBool(batchResults);
     }
 
     /**
@@ -95,7 +96,7 @@ public class Db {
      * @param entityList 实体对象集合
      */
     public static <T> boolean saveOrUpdateBatch(Collection<T> entityList) {
-        return saveOrUpdateBatch(entityList, IService.DEFAULT_BATCH_SIZE);
+        return saveOrUpdateBatch(entityList, Constants.DEFAULT_BATCH_SIZE);
     }
 
     /**
@@ -109,19 +110,8 @@ public class Db {
             return false;
         }
         Class<T> entityClass = getEntityClass(entityList);
-        TableInfo tableInfo = getTableInfo(entityClass);
-        Class<?> mapperClass = ClassUtils.toClassConfident(tableInfo.getCurrentNamespace());
-        String keyProperty = tableInfo.getKeyProperty();
-        Assert.notEmpty(keyProperty, "error: can not execute. because can not find column for primary key from entity!");
-        return SqlHelper.saveOrUpdateBatch(entityClass, mapperClass, log, entityList, batchSize, (sqlSession, entity) -> {
-            Object idVal = tableInfo.getPropertyValue(entity, keyProperty);
-            return StringUtils.checkValNull(idVal)
-                || CollectionUtils.isEmpty(sqlSession.selectList(SqlHelper.getSqlStatement(mapperClass, SqlMethod.SELECT_BY_ID), entity));
-        }, (sqlSession, entity) -> {
-            MapperMethod.ParamMap<T> param = new MapperMethod.ParamMap<>();
-            param.put(Constants.ENTITY, entity);
-            sqlSession.update(SqlHelper.getSqlStatement(mapperClass, SqlMethod.UPDATE_BY_ID), param);
-        });
+        List<BatchResult> batchResults = SqlHelper.execute(entityClass, baseMapper -> baseMapper.insertOrUpdate(entityList, batchSize));
+        return SqlHelper.retBool(batchResults);
     }
 
     /**
@@ -192,7 +182,7 @@ public class Db {
      * @param entityList 实体对象集合
      */
     public static <T> boolean updateBatchById(Collection<T> entityList) {
-        return updateBatchById(entityList, IService.DEFAULT_BATCH_SIZE);
+        return updateBatchById(entityList, Constants.DEFAULT_BATCH_SIZE);
     }
 
     /**
@@ -203,13 +193,8 @@ public class Db {
      */
     public static <T> boolean updateBatchById(Collection<T> entityList, int batchSize) {
         Class<T> entityClass = getEntityClass(entityList);
-        TableInfo tableInfo = getTableInfo(entityClass);
-        String sqlStatement = SqlHelper.getSqlStatement(ClassUtils.toClassConfident(tableInfo.getCurrentNamespace()), SqlMethod.UPDATE_BY_ID);
-        return SqlHelper.executeBatch(entityClass, log, entityList, batchSize, (sqlSession, entity) -> {
-            MapperMethod.ParamMap<T> param = new MapperMethod.ParamMap<>();
-            param.put(Constants.ENTITY, entity);
-            sqlSession.update(sqlStatement, param);
-        });
+        List<BatchResult> batchResults = SqlHelper.execute(entityClass, baseMapper -> baseMapper.updateById(entityList, batchSize));
+        return SqlHelper.retBool(batchResults);
     }
 
     /**
@@ -219,7 +204,7 @@ public class Db {
      * @param entityClass 实体类
      */
     public static <T> boolean removeByIds(Collection<? extends Serializable> list, Class<T> entityClass) {
-        return SqlHelper.execute(entityClass, baseMapper -> SqlHelper.retBool(baseMapper.deleteBatchIds(list)));
+        return SqlHelper.execute(entityClass, baseMapper -> SqlHelper.retBool(baseMapper.deleteByIds(list)));
     }
 
     /**
@@ -241,13 +226,7 @@ public class Db {
         if (Objects.isNull(entity)) {
             return false;
         }
-        Class<T> entityClass = getEntityClass(entity);
-        TableInfo tableInfo = TableInfoHelper.getTableInfo(entityClass);
-        Assert.notNull(tableInfo, "error: can not execute. because can not find cache of TableInfo for entity!");
-        String keyProperty = tableInfo.getKeyProperty();
-        Assert.notEmpty(keyProperty, "error: can not execute. because can not find column for id from entity!");
-        Object idVal = tableInfo.getPropertyValue(entity, tableInfo.getKeyProperty());
-        return StringUtils.checkValNull(idVal) || Objects.isNull(getById((Serializable) idVal, entityClass)) ? save(entity) : updateById(entity);
+        return SqlHelper.execute(getEntityClass(entity), baseMapper -> baseMapper.insertOrUpdate(entity));
     }
 
     /**
@@ -321,7 +300,7 @@ public class Db {
      * @param entityClass 实体类
      */
     public static <T> List<T> listByIds(Collection<? extends Serializable> idList, Class<T> entityClass) {
-        return SqlHelper.execute(entityClass, baseMapper -> baseMapper.selectBatchIds(idList));
+        return SqlHelper.execute(entityClass, baseMapper -> baseMapper.selectByIds(idList));
     }
 
     /**
@@ -670,7 +649,7 @@ public class Db {
     protected static <T> Class<T> getEntityClass(Collection<T> entityList) {
         Class<T> entityClass = null;
         for (T entity : entityList) {
-            if (entity != null && entity.getClass() != null) {
+            if (entity != null) {
                 entityClass = getEntityClass(entity);
                 break;
             }

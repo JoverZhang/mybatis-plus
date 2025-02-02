@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,15 @@
  */
 package com.baomidou.mybatisplus.core.exceptions;
 
+import org.apache.ibatis.exceptions.PersistenceException;
+
 /**
  * MybatisPlus 异常类
  *
  * @author hubin
  * @since 2016-01-23
  */
-public class MybatisPlusException extends RuntimeException {
+public class MybatisPlusException extends PersistenceException {
 
     private static final long serialVersionUID = 1L;
 

@@ -31,21 +31,21 @@ Mybatis 增强工具包 - 只做增强不做改变，简化`CRUD`操作
 # 特别用户
 
 <p>
-  <a href="https://www.diboot.com/?from=mp" target="_blank">
-   <img alt="DiBoot-Logo" src="https://www.diboot.com/diboot_slogon.png" width="160px" height="50px">
+  <a href="https://doc.flowlong.com?from=mp" target="_blank">
+   <img alt="aizuda-Logo" src="https://foruda.gitee.com/images/1715955628416785121/954c16ef_12260.png" width="160px" height="50px">
   </a>
-  <a href="http://aizuda.com/?from=mp" target="_blank">
-   <img alt="Mybatis-Plus-Logo" src="https://foruda.gitee.com/images/1685339582501163828/763d3037_12260.png" width="160px" height="50px">
+  <a href="https://gitee.com/gz-yami/mall4j?from=mp" target="_blank">
+   <img alt="mall4j-Logo" src="https://foruda.gitee.com/images/1716776021837872678/87883b39_12260.gif" width="160px" height="50px">
   </a>
   <a href="http://github.crmeb.net/u/MyBatis-Plus" target="_blank">
-   <img alt="Crmeb-Logo" src="https://foruda.gitee.com/images/1685339553088166856/b0a6b1a4_12260.gif" width="160px" height="50px">
+   <img alt="crmeb-Logo" src="https://foruda.gitee.com/images/1685339553088166856/b0a6b1a4_12260.gif" width="160px" height="50px">
   </a>
 </p>
 
-
 # 依赖引用
 
-- Latest Version: [![Maven Central](https://img.shields.io/maven-central/v/com.baomidou/mybatis-plus.svg)](https://search.maven.org/search?q=g:com.baomidou%20a:mybatis-*)
+- Latest
+  Version: [![Maven Central](https://img.shields.io/maven-central/v/com.baomidou/mybatis-plus.svg)](https://search.maven.org/search?q=g:com.baomidou%20a:mybatis-*)
     - Maven:
     - SpringBoot2
       ```xml
@@ -63,25 +63,44 @@ Mybatis 增强工具包 - 只做增强不做改变，简化`CRUD`操作
         <version>Latest Version</version>
       </dependency>
       ```
-    - Gradle
-    - SpringBoot2
-      ```groovy
-      compile group: 'com.baomidou', name: 'mybatis-plus-boot-starter', version: 'Latest Version'
+    - `^3.5.9` 你可能需要额外的引用
+        - jdk11+
+      ```xml
+      <dependency>
+        <groupId>com.baomidou</groupId>
+        <artifactId>mybatis-plus-jsqlparser</artifactId>
+        <version>Latest Version</version>
+      </dependency>
       ```
-    - SpringBoot3
-      ```groovy
-      compile group: 'com.baomidou', name: 'mybatis-plus-spring-boot3-starter', version: 'Latest Version'
+        - jdk8
+      ```xml
+      <dependency>
+        <groupId>com.baomidou</groupId>
+        <artifactId>mybatis-plus-jsqlparser-4.9</artifactId>
+        <version>Latest Version</version>
+      </dependency>
       ```
+        - Gradle
+        - SpringBoot2
+          ```groovy
+          compile group: 'com.baomidou', name: 'mybatis-plus-boot-starter', version: 'Latest Version'
+          ```
+        - SpringBoot3
+          ```groovy
+          compile group: 'com.baomidou', name: 'mybatis-plus-spring-boot3-starter', version: 'Latest Version'
+          ```
 
 # 优点 | Advantages
 
-- **无侵入**：Mybatis-Plus 在 Mybatis 的基础上进行扩展，只做增强不做改变，引入 Mybatis-Plus 不会对您现有的 Mybatis 构架产生任何影响，而且 MP 支持所有 Mybatis 原生的特性
+- **无侵入**：Mybatis-Plus 在 Mybatis 的基础上进行扩展，只做增强不做改变，引入 Mybatis-Plus 不会对您现有的 Mybatis
+  构架产生任何影响，而且 MP 支持所有 Mybatis 原生的特性
 - **依赖少**：仅仅依赖 Mybatis 以及 Mybatis-Spring
 - **损耗小**：启动即会自动注入基本CURD，性能基本无损耗，直接面向对象操作
 - **通用CRUD操作**：内置通用 Mapper、通用 Service，仅仅通过少量配置即可实现单表大部分 CRUD 操作，更有强大的条件构造器，满足各类使用需求
 - **多种主键策略**：支持多达4种主键策略（内含分布式唯一ID生成器），可自由配置，完美解决主键问题
 - **支持ActiveRecord**：支持 ActiveRecord 形式调用，实体类只需继承 Model 类即可实现基本 CRUD 操作
-- **支持代码生成**：采用代码或者 Maven 插件可快速生成 Mapper 、 Model 、 Service 、 Controller 层代码，支持模板引擎，更有超多自定义配置等您来使用（P.S. 比 Mybatis 官方的 Generator 更加强大！）
+- **支持代码生成**：采用代码或者 Maven 插件可快速生成 Mapper 、 Model 、 Service 、 Controller
+  层代码，支持模板引擎，更有超多自定义配置等您来使用（P.S. 比 Mybatis 官方的 Generator 更加强大！）
 - **支持自定义全局通用操作**：支持全局通用方法注入( Write once, use anywhere )
 - **内置分页插件**：基于Mybatis物理分页，开发者无需关心具体操作，配置好插件之后，写分页等同于写基本List查询
 - **内置性能分析插件**：可输出Sql语句以及其执行时间，建议开发测试时启用该功能，能有效解决慢查询
@@ -115,6 +134,7 @@ Mybatis 增强工具包 - 只做增强不做改变，简化`CRUD`操作
 - [基于 pac4j-jwt 的快速集成的 web 安全组件 shaun](https://gitee.com/baomidou/shaun)
 
 # 王者荣耀
+
 ![MPTrophy](https://foruda.gitee.com/images/1703034397683946868/c9bf2ba5_12260.jpeg "mybatis-plus.jpg")
 
 # 期望 | Futures

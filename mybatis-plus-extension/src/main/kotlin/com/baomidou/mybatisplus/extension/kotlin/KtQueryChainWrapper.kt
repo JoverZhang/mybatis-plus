@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,10 @@ open class KtQueryChainWrapper<T : Any>(
     override fun select(condition: Boolean, columns: MutableList<KProperty1<in T, *>>): KtQueryChainWrapper<T> {
         wrapperChildren.select(condition, columns)
         return typedThis
+    }
+
+    override fun select(predicate: Predicate<TableFieldInfo>): KtQueryChainWrapper<T> {
+        return select(entityClass, predicate)
     }
 
     override fun select(entityClass: Class<T>, predicate: Predicate<TableFieldInfo>): KtQueryChainWrapper<T> {

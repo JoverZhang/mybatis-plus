@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,6 +70,10 @@ open class KtQueryWrapper<T : Any> : AbstractKtWrapper<T, KtQueryWrapper<T>>, Qu
             this.sqlSelect.stringValue = columnsToString(false, columns)
         }
         return typedThis
+    }
+
+    override fun select(predicate: Predicate<TableFieldInfo>): KtQueryWrapper<T> {
+        return select(entityClass, predicate) as KtQueryWrapper<T>
     }
 
     override fun select(entityClass: Class<T>, predicate: Predicate<TableFieldInfo>): KtQueryWrapper<T> {

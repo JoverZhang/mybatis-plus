@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -197,14 +197,13 @@ public class MybatisMapperMethod {
     private <E> Object convertToArray(List<E> list) {
         Class<?> arrayComponentType = method.getReturnType().getComponentType();
         Object array = Array.newInstance(arrayComponentType, list.size());
-        if (arrayComponentType.isPrimitive()) {
-            for (int i = 0; i < list.size(); i++) {
-                Array.set(array, i, list.get(i));
-            }
-            return array;
-        } else {
+        if (!arrayComponentType.isPrimitive()) {
             return list.toArray((E[]) array);
         }
+        for (int i = 0; i < list.size(); i++) {
+            Array.set(array, i, list.get(i));
+        }
+        return array;
     }
 
     private <K, V> Map<K, V> executeForMap(SqlSession sqlSession, Object[] args) {

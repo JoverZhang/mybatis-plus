@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,11 +50,11 @@ class PathInfoHandler {
      */
     private final PackageConfig packageConfig;
 
-    PathInfoHandler(GlobalConfig globalConfig, TemplateConfig templateConfig, PackageConfig packageConfig) {
+    PathInfoHandler(InjectionConfig injectionConfig, GlobalConfig globalConfig, StrategyConfig strategyConfig, PackageConfig packageConfig) {
         this.outputDir = globalConfig.getOutputDir();
         this.packageConfig = packageConfig;
         // 设置默认输出路径
-        this.setDefaultPathInfo(globalConfig, templateConfig);
+        this.setDefaultPathInfo(injectionConfig, globalConfig, strategyConfig);
         // 覆盖自定义路径
         Map<OutputFile, String> pathInfo = packageConfig.getPathInfo();
         if (CollectionUtils.isNotEmpty(pathInfo)) {
@@ -66,26 +66,42 @@ class PathInfoHandler {
      * 设置默认输出路径
      *
      * @param globalConfig   全局配置
-     * @param templateConfig 模板配置
+     * @param strategyConfig 模板配置
      */
-    private void setDefaultPathInfo(GlobalConfig globalConfig, TemplateConfig templateConfig) {
-        putPathInfo(templateConfig.getEntity(globalConfig.isKotlin()), OutputFile.entity, ConstVal.ENTITY);
-        putPathInfo(templateConfig.getMapper(), OutputFile.mapper, ConstVal.MAPPER);
-        putPathInfo(templateConfig.getXml(), OutputFile.xml, ConstVal.XML);
-        putPathInfo(templateConfig.getService(), OutputFile.service, ConstVal.SERVICE);
-        putPathInfo(templateConfig.getServiceImpl(), OutputFile.serviceImpl, ConstVal.SERVICE_IMPL);
-        putPathInfo(templateConfig.getController(), OutputFile.controller, ConstVal.CONTROLLER);
-        putPathInfo(OutputFile.parent, ConstVal.PARENT);
+    private void setDefaultPathInfo(InjectionConfig injectionConfig, GlobalConfig globalConfig, StrategyConfig strategyConfig) {
+        Entity entity = strategyConfig.entity();
+        if (entity.isGenerate()) {
+            putPathInfo(injectionConfig, globalConfig.isKotlin() ? entity.getKotlinTemplate() : entity.getJavaTemplate(), OutputFile.entity, ConstVal.ENTITY);
+        }
+        Mapper mapper = strategyConfig.mapper();
+        if (mapper.isGenerateMapper()) {
+            putPathInfo(injectionConfig, mapper.getMapperTemplatePath(), OutputFile.mapper, ConstVal.MAPPER);
+        }
+        if (mapper.isGenerateMapperXml()) {
+            putPathInfo(injectionConfig, mapper.getMapperXmlTemplatePath(), OutputFile.xml, ConstVal.XML);
+        }
+        Service service = strategyConfig.service();
+        if (service.isGenerateService()) {
+            putPathInfo(injectionConfig, service.getServiceTemplate(), OutputFile.service, ConstVal.SERVICE);
+        }
+        if (service.isGenerateServiceImpl()) {
+            putPathInfo(injectionConfig, service.getServiceImplTemplate(), OutputFile.serviceImpl, ConstVal.SERVICE_IMPL);
+        }
+        Controller controller = strategyConfig.controller();
+        if (controller.isGenerate()) {
+            putPathInfo(injectionConfig, controller.getTemplatePath(), OutputFile.controller, ConstVal.CONTROLLER);
+        }
+        putPathInfo(injectionConfig, OutputFile.parent, ConstVal.PARENT);
     }
 
-    private void putPathInfo(String template, OutputFile outputFile, String module) {
+    private void putPathInfo(InjectionConfig injectionConfig, String template, OutputFile outputFile, String module) {
         if (StringUtils.isNotBlank(template)) {
-            putPathInfo(outputFile, module);
+            putPathInfo(injectionConfig, outputFile, module);
         }
     }
 
-    private void putPathInfo(OutputFile outputFile, String module) {
-        pathInfo.putIfAbsent(outputFile, joinPath(outputDir, packageConfig.getPackageInfo(module)));
+    private void putPathInfo(InjectionConfig injectionConfig, OutputFile outputFile, String module) {
+        pathInfo.putIfAbsent(outputFile, joinPath(outputDir, packageConfig.getPackageInfo(injectionConfig, module)));
     }
 
     /**

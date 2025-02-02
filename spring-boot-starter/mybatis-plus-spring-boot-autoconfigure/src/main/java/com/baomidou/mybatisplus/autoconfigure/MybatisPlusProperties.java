@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.baomidou.mybatisplus.autoconfigure;
 
+import com.baomidou.mybatisplus.core.MybatisConfiguration;
 import com.baomidou.mybatisplus.core.config.GlobalConfig;
 import com.baomidou.mybatisplus.core.toolkit.Constants;
 import com.baomidou.mybatisplus.core.toolkit.GlobalConfigUtils;
@@ -28,7 +29,6 @@ import org.apache.ibatis.mapping.ResultSetType;
 import org.apache.ibatis.scripting.LanguageDriver;
 import org.apache.ibatis.session.AutoMappingBehavior;
 import org.apache.ibatis.session.AutoMappingUnknownColumnBehavior;
-import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.LocalCacheScope;
 import org.apache.ibatis.type.JdbcType;
@@ -114,14 +114,6 @@ public class MybatisPlusProperties {
      * is specified, this property is not used.
      */
     private CoreConfiguration configuration;
-
-    /**
-     * 不再需要这个配置,放心删除
-     *
-     * @deprecated 2022-03-07
-     */
-    @Deprecated
-    private String typeEnumsPackage;
 
     /**
      * 全局配置
@@ -348,7 +340,7 @@ public class MybatisPlusProperties {
 
         private Boolean useGeneratedShortKey;
 
-        public void applyTo(Configuration target) {
+        public void applyTo(MybatisConfiguration target) {
             PropertyMapper mapper = PropertyMapper.get().alwaysApplyingWhenNonNull();
             mapper.from(getSafeRowBoundsEnabled()).to(target::setSafeRowBoundsEnabled);
             mapper.from(getSafeResultHandlerEnabled()).to(target::setSafeResultHandlerEnabled);
@@ -383,7 +375,7 @@ public class MybatisPlusProperties {
             mapper.from(getDefaultEnumTypeHandler()).to(target::setDefaultEnumTypeHandler);
             mapper.from(getDefaultScriptingLanguageDriver()).to(target::setDefaultScriptingLanguage);
             mapper.from(getDatabaseId()).to(target::setDatabaseId);
-            mapper.from(getUseGeneratedShortKey()).to(target::setUseGeneratedKeys);
+            mapper.from(getUseGeneratedShortKey()).to(target::setUseGeneratedShortKey);
         }
     }
 

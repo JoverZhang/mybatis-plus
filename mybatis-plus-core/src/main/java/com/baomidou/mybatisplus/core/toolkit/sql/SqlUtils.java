@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.baomidou.mybatisplus.core.toolkit.Constants;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -36,8 +37,8 @@ import java.util.regex.Pattern;
  * @since 2016-11-13
  */
 public abstract class SqlUtils implements Constants {
-
-    private static final Pattern pattern = Pattern.compile("\\{@((\\w+?)|(\\w+?:\\w+?)|(\\w+?:\\w+?:\\w+?))}");
+    private static final String tp = "[\\w-,]+?";
+    private static final Pattern pattern = Pattern.compile(String.format("\\{@((%s)|(%s:\\w+?)|(%s:\\w+?:\\w+?))}", tp, tp, tp));
 
     /**
      * 用%连接like
@@ -90,10 +91,17 @@ public abstract class SqlUtils implements Constants {
         return sql;
     }
 
+    @SuppressWarnings("all")
     public static String getSelectBody(String tableName, String alisa, String asAlisa, String escapeSymbol) {
+        int notSel = tableName.indexOf("-");
+        List<String> notSelColl = null;
+        if (notSel > 0) {
+            notSelColl = Arrays.asList(tableName.substring(notSel + 1).split(COMMA));
+            tableName = tableName.substring(0, notSel);
+        }
         TableInfo tableInfo = TableInfoHelper.getTableInfo(tableName);
         Assert.notNull(tableInfo, "can not find TableInfo Cache by \"%s\"", tableName);
-        String s = tableInfo.chooseSelect(TableFieldInfo::isSelect);
+        String s = tableInfo.chooseSelect(TableFieldInfo::isSelect, notSelColl);
         if (alisa == null) {
             return s;
         }
@@ -108,14 +116,17 @@ public abstract class SqlUtils implements Constants {
             final String sa = alisa.concat(DOT);
             if (asA) {
                 int as = body.indexOf(AS);
+                String column;
+                String property;
                 if (as < 0) {
-                    sb.append(sa).append(body).append(AS).append(escapeColumn(asAlisa.concat(DOT).concat(body), escapeSymbol));
+                    column = body;
+                    property = StringUtils.getTargetColumn(body);
                 } else {
-                    String column = body.substring(0, as);
-                    String property = body.substring(as + 4);
+                    column = body.substring(0, as);
+                    property = body.substring(as + 4);
                     property = StringUtils.getTargetColumn(property);
-                    sb.append(sa).append(column).append(AS).append(escapeColumn(asAlisa.concat(DOT).concat(property), escapeSymbol));
                 }
+                sb.append(sa).append(column).append(AS).append(escapeColumn(asAlisa.concat(DOT).concat(property), escapeSymbol));
             } else {
                 sb.append(sa).append(body);
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,9 +42,9 @@ import org.apache.ibatis.transaction.Transaction;
 import org.apache.ibatis.type.TypeHandler;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
@@ -133,8 +133,9 @@ public class MybatisConfiguration extends Configuration {
      * 新增注入新的 Mapper 信息，新增前会清理之前的缓存信息
      *
      * @param type Mapper Type
-     * @param <T>
+     * @deprecated 3.5.8 不建议在实际生产环境中使用.
      */
+    @Deprecated
     public <T> void addNewMapper(Class<T> type) {
         this.removeMapper(type);
         this.addMapper(type);
@@ -144,8 +145,9 @@ public class MybatisConfiguration extends Configuration {
      * 移除 Mapper 相关缓存，支持 GroovyClassLoader 动态注入 Mapper
      *
      * @param type Mapper Type
-     * @param <T>
+     * @deprecated 3.5.8 不建议在实际生产环境中使用.
      */
+    @Deprecated
     public <T> void removeMapper(Class<T> type) {
         Set<String> mapperRegistryCache = GlobalConfigUtils.getGlobalConfig(this).getMapperRegistryCache();
         final String mapperType = type.toString();
@@ -156,14 +158,18 @@ public class MybatisConfiguration extends Configuration {
             // 清空 Mapper 缓存信息
             this.mybatisMapperRegistry.removeMapper(type);
             this.loadedResources.remove(type.toString());
+            this.loadedResources.remove(type.getName().replace(StringPool.DOT, StringPool.SLASH) + ".xml");
             mapperRegistryCache.remove(mapperType);
 
             // 清空 Mapper 方法 mappedStatement 缓存信息
-            final String typeKey = type.getName() + StringPool.DOT;
-            Set<String> mapperSet = mappedStatements.keySet().stream().filter(ms -> ms.startsWith(typeKey)).collect(Collectors.toSet());
-            if (!mapperSet.isEmpty()) {
-                mapperSet.forEach(mappedStatements::remove);
-            }
+            String typeKey = type.getName() + StringPool.DOT;
+            String simpleName = type.getSimpleName();
+            mappedStatements.keySet().stream().filter(ms -> ms.startsWith(typeKey) || ms.equals(simpleName)).collect(Collectors.toSet()).forEach(mappedStatements::remove);
+            resultMaps.keySet().stream().filter(r -> r.startsWith(typeKey)).collect(Collectors.toSet()).forEach(resultMaps::remove);
+            parameterMaps.keySet().stream().filter(p -> p.startsWith(typeKey)).collect(Collectors.toSet()).forEach(parameterMaps::remove);
+            keyGenerators.keySet().stream().filter(k -> k.startsWith(typeKey)).collect(Collectors.toSet()).forEach(keyGenerators::remove);
+            sqlFragments.keySet().stream().filter(s -> s.startsWith(typeKey)).collect(Collectors.toSet()).forEach(sqlFragments::remove);
+            caches.keySet().stream().filter(p -> p.equals(type.getName()) || p.equals(simpleName)).collect(Collectors.toSet()).forEach(caches::remove);
         }
     }
 
@@ -366,15 +372,16 @@ public class MybatisConfiguration extends Configuration {
 
     // Slow but a one time cost. A better solution is welcome.
     @Override
-    protected void checkGloballyForDiscriminatedNestedResultMaps(ResultMap rm) {
+    public void checkGloballyForDiscriminatedNestedResultMaps(ResultMap rm) {
         if (rm.hasNestedResultMaps()) {
-            for (Map.Entry<String, ResultMap> entry : resultMaps.entrySet()) {
-                Object value = entry.getValue();
-                if (value instanceof ResultMap) {
-                    ResultMap entryResultMap = (ResultMap) value;
+            final String resultMapId = rm.getId();
+            for (Object resultMapObject : resultMaps.values()) {
+                if (resultMapObject instanceof ResultMap) {
+                    ResultMap entryResultMap = (ResultMap) resultMapObject;
                     if (!entryResultMap.hasNestedResultMaps() && entryResultMap.getDiscriminator() != null) {
-                        Collection<String> discriminatedResultMapNames = entryResultMap.getDiscriminator().getDiscriminatorMap().values();
-                        if (discriminatedResultMapNames.contains(rm.getId())) {
+                        Collection<String> discriminatedResultMapNames = entryResultMap.getDiscriminator().getDiscriminatorMap()
+                            .values();
+                        if (discriminatedResultMapNames.contains(resultMapId)) {
                             entryResultMap.forceNestedResultMaps();
                         }
                     }
@@ -387,8 +394,7 @@ public class MybatisConfiguration extends Configuration {
     @Override
     protected void checkLocallyForDiscriminatedNestedResultMaps(ResultMap rm) {
         if (!rm.hasNestedResultMaps() && rm.getDiscriminator() != null) {
-            for (Map.Entry<String, String> entry : rm.getDiscriminator().getDiscriminatorMap().entrySet()) {
-                String discriminatedResultMapName = entry.getValue();
+            for (String discriminatedResultMapName : rm.getDiscriminator().getDiscriminatorMap().values()) {
                 if (hasResultMap(discriminatedResultMapName)) {
                     ResultMap discriminatedResultMap = resultMaps.get(discriminatedResultMapName);
                     if (discriminatedResultMap.hasNestedResultMaps()) {
@@ -400,14 +406,30 @@ public class MybatisConfiguration extends Configuration {
         }
     }
 
-    protected class StrictMap<V> extends HashMap<String, V> {
+    protected class StrictMap<V> extends ConcurrentHashMap<String, V> {
 
         private static final long serialVersionUID = -4950446264854982944L;
         private final String name;
         private BiFunction<V, V, String> conflictMessageProducer;
+        private final Object AMBIGUITY_INSTANCE = new Object();
+
+        public StrictMap(String name, int initialCapacity, float loadFactor) {
+            super(initialCapacity, loadFactor);
+            this.name = name;
+        }
+
+        public StrictMap(String name, int initialCapacity) {
+            super(initialCapacity);
+            this.name = name;
+        }
 
         public StrictMap(String name) {
             super();
+            this.name = name;
+        }
+
+        public StrictMap(String name, Map<String, ? extends V> m) {
+            super(m);
             this.name = name;
         }
 
@@ -438,11 +460,19 @@ public class MybatisConfiguration extends Configuration {
                     if (super.get(shortKey) == null) {
                         super.put(shortKey, value);
                     } else {
-                        super.put(shortKey, (V) new StrictMap.Ambiguity(shortKey));
+                        super.put(shortKey, (V) AMBIGUITY_INSTANCE);
                     }
                 }
             }
             return super.put(key, value);
+        }
+
+        @Override
+        public boolean containsKey(Object key) {
+            if (key == null) {
+                return false;
+            }
+            return super.get(key) != null;
         }
 
         @Override
@@ -451,23 +481,11 @@ public class MybatisConfiguration extends Configuration {
             if (value == null) {
                 throw new IllegalArgumentException(name + " does not contain value for " + key);
             }
-            if (useGeneratedShortKey && value instanceof StrictMap.Ambiguity) {
-                throw new IllegalArgumentException(((StrictMap.Ambiguity) value).getSubject() + " is ambiguous in " + name
+            if (useGeneratedShortKey && AMBIGUITY_INSTANCE == value) {
+                throw new IllegalArgumentException(key + " is ambiguous in " + name
                     + " (try using the full name including the namespace, or rename one of the entries)");
             }
             return value;
-        }
-
-        protected class Ambiguity {
-            private final String subject;
-
-            public Ambiguity(String subject) {
-                this.subject = subject;
-            }
-
-            public String getSubject() {
-                return subject;
-            }
         }
 
         private String getShortName(String key) {
