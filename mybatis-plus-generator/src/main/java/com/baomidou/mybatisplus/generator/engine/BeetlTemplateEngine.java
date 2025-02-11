@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,13 +66,20 @@ public class BeetlTemplateEngine extends AbstractTemplateEngine {
     }
 
     @Override
+    public String writer(@NotNull Map<String, Object> objectMap, @NotNull String templateName, @NotNull String templateString) throws Exception {
+        Template template = groupTemplate.getTemplate(templateString);
+        template.binding(objectMap);
+        return template.render();
+    }
+
+    @Override
     public void writer(@NotNull Map<String, Object> objectMap, @NotNull String templatePath, @NotNull File outputFile) throws Exception {
         Template template = (Template) method.invoke(groupTemplate, templatePath);
         try (FileOutputStream fileOutputStream = new FileOutputStream(outputFile)) {
             template.binding(objectMap);
             template.renderTo(fileOutputStream);
         }
-        LOGGER.debug("模板:" + templatePath + ";  文件:" + outputFile);
+        LOGGER.debug("模板:{};  文件:{}", templatePath, outputFile);
     }
 
     @Override

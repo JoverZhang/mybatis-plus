@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package com.baomidou.mybatisplus.core.metadata;
 
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.baomidou.mybatisplus.core.toolkit.sql.SqlInjectionUtils;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -74,4 +73,13 @@ public class OrderItem implements Serializable {
         this.asc = asc;
         return this;
     }
+
+    @Override
+    public String toString() {
+        return "OrderItem{" +
+            "column='" + column + '\'' +
+            ", asc=" + asc +
+            '}';
+    }
+
 }

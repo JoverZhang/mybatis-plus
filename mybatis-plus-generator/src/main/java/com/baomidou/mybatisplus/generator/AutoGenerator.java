@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,9 @@ public class AutoGenerator {
     private PackageConfig packageInfo;
     /**
      * 模板 相关配置
+     * @deprecated 3.5.6 {@link #strategy}
      */
+    @Deprecated
     private TemplateConfig template;
     /**
      * 全局 相关配置
@@ -123,8 +125,10 @@ public class AutoGenerator {
      *
      * @param templateConfig 模板配置
      * @return this
+     * @deprecated 3.5.6 {@link #strategy(StrategyConfig)}
      * @since 3.5.0
      */
+    @Deprecated
     public AutoGenerator template(@NotNull TemplateConfig templateConfig) {
         this.template = templateConfig;
         return this;
@@ -135,7 +139,7 @@ public class AutoGenerator {
      *
      * @param globalConfig 全局配置
      * @return this
-     * @see 3.5.0
+     * @since  3.5.0
      */
     public AutoGenerator global(@NotNull GlobalConfig globalConfig) {
         this.globalConfig = globalConfig;

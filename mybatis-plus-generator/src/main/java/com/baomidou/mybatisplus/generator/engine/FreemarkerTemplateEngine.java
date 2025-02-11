@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
+import java.io.StringWriter;
 import java.util.Map;
 
 /**
@@ -44,6 +45,13 @@ public class FreemarkerTemplateEngine extends AbstractTemplateEngine {
         return this;
     }
 
+    @Override
+    public String writer(@NotNull Map<String, Object> objectMap, @NotNull String templateName, @NotNull String templateString) throws Exception {
+        Template template = new Template(templateName, templateString, configuration);
+        StringWriter writer = new StringWriter();
+        template.process(objectMap, writer);
+        return writer.toString();
+    }
 
     @Override
     public void writer(@NotNull Map<String, Object> objectMap, @NotNull String templatePath, @NotNull File outputFile) throws Exception {
@@ -51,7 +59,7 @@ public class FreemarkerTemplateEngine extends AbstractTemplateEngine {
         try (FileOutputStream fileOutputStream = new FileOutputStream(outputFile)) {
             template.process(objectMap, new OutputStreamWriter(fileOutputStream, ConstVal.UTF8));
         }
-        LOGGER.debug("模板:" + templatePath + ";  文件:" + outputFile);
+        LOGGER.debug("模板:{};  文件:{}", templatePath, outputFile);
     }
 
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,12 @@ import com.baomidou.mybatisplus.annotation.TableName;
  * Json类型处理器接口(实现类确保为多例状态).
  * <p>
  * 注意:查询返回时需要使用resultMap
+ *
+ * <pre>
+ * Example:
+ *     &lt;result property="xx" column="xx" javaType="list" typeHandler="com.baomidou.mybatisplus.extension.handlers.GsonTypeHandler"/&gt;
+ *     &lt;result property="xx" column="xx" typeHandler="com.baomidou.mybatisplus.extension.handlers.GsonTypeHandler"/&gt;
+ * </pre>
  * </p>
  *
  * @author nieqiurong 2024年3月4日
@@ -44,6 +50,6 @@ public interface IJsonTypeHandler<T> {
      * @param obj 对象信息
      * @return json字符串
      */
-    String toJson(Object obj);
+    String toJson(T obj);
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,32 +15,18 @@
  */
 package com.baomidou.mybatisplus.core.metadata;
 
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.FieldStrategy;
-import com.baomidou.mybatisplus.annotation.OrderBy;
-import com.baomidou.mybatisplus.annotation.SqlCondition;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableLogic;
-import com.baomidou.mybatisplus.annotation.Version;
+import com.baomidou.mybatisplus.annotation.*;
 import com.baomidou.mybatisplus.core.config.GlobalConfig;
 import com.baomidou.mybatisplus.core.handlers.IJsonTypeHandler;
 import com.baomidou.mybatisplus.core.toolkit.Constants;
 import com.baomidou.mybatisplus.core.toolkit.MybatisUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.sql.SqlScriptUtils;
-import lombok.AccessLevel;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 import org.apache.ibatis.mapping.ResultMapping;
 import org.apache.ibatis.reflection.Reflector;
 import org.apache.ibatis.session.Configuration;
-import org.apache.ibatis.type.JdbcType;
-import org.apache.ibatis.type.TypeAliasRegistry;
-import org.apache.ibatis.type.TypeHandler;
-import org.apache.ibatis.type.TypeHandlerRegistry;
-import org.apache.ibatis.type.UnknownTypeHandler;
+import org.apache.ibatis.type.*;
 
 import java.lang.reflect.Field;
 import java.util.Map;
@@ -273,12 +259,16 @@ public class TableFieldInfo implements Constants {
                 /* 开启字段全大写申明 */
                 column = column.toUpperCase();
             }
+            String columnFormat = dbConfig.getColumnFormat();
+            if (StringUtils.isNotBlank(columnFormat)) {
+                column = String.format(columnFormat, column);
+            }
+        } else {
+            String columnFormat = dbConfig.getColumnFormat();
+            if (StringUtils.isNotBlank(columnFormat) && tableField.keepGlobalFormat()) {
+                column = String.format(columnFormat, column);
+            }
         }
-        String columnFormat = dbConfig.getColumnFormat();
-        if (StringUtils.isNotBlank(columnFormat) && tableField.keepGlobalFormat()) {
-            column = String.format(columnFormat, column);
-        }
-
         this.column = column;
         this.sqlSelect = column;
         if (needAs) {
@@ -384,7 +374,7 @@ public class TableFieldInfo implements Constants {
      * 排序初始化
      *
      * @param tableInfo 表信息
-     * @param orderBy 排序注解
+     * @param orderBy   排序注解
      */
     private void initOrderBy(TableInfo tableInfo, OrderBy orderBy) {
         if (null != orderBy) {
@@ -401,7 +391,7 @@ public class TableFieldInfo implements Constants {
      * 逻辑删除初始化
      *
      * @param globalConfig 全局配置
-     * @param field    字段属性对象
+     * @param field        字段属性对象
      */
     private void initLogicDelete(GlobalConfig globalConfig, Field field, boolean existTableLogic) {
         GlobalConfig.DbConfig dbConfig = globalConfig.getDbConfig();
@@ -597,7 +587,7 @@ public class TableFieldInfo implements Constants {
         if (fieldStrategy == FieldStrategy.NEVER) {
             return null;
         }
-        if (isPrimitive || fieldStrategy == FieldStrategy.IGNORED || fieldStrategy == FieldStrategy.ALWAYS) {
+        if (isPrimitive || fieldStrategy == FieldStrategy.ALWAYS) {
             return sqlScript;
         }
         if (fieldStrategy == FieldStrategy.NOT_EMPTY && isCharSequence) {

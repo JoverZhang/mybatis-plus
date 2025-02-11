@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,13 @@
  */
 package com.baomidou.mybatisplus.core.override;
 
-import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.core.plugins.IgnoreStrategy;
+import com.baomidou.mybatisplus.core.plugins.InterceptorIgnoreHelper;
+import com.baomidou.mybatisplus.core.toolkit.MybatisUtils;
 import org.apache.ibatis.binding.MapperProxy;
 import org.apache.ibatis.reflection.ExceptionUtil;
 import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.util.MapUtil;
 
 import java.io.Serializable;
 import java.lang.invoke.MethodHandle;
@@ -39,7 +42,7 @@ import java.util.Map;
  */
 public class MybatisMapperProxy<T> implements InvocationHandler, Serializable {
 
-    private static final long serialVersionUID = -5154982058833204559L;
+    private static final long serialVersionUID = -4724728412955527868L;
     private static final int ALLOWED_MODES = MethodHandles.Lookup.PRIVATE | MethodHandles.Lookup.PROTECTED
         | MethodHandles.Lookup.PACKAGE | MethodHandles.Lookup.PUBLIC;
     private static final Constructor<MethodHandles.Lookup> lookupConstructor;
@@ -73,7 +76,7 @@ public class MybatisMapperProxy<T> implements InvocationHandler, Serializable {
                 throw new IllegalStateException(
                     "There is neither 'privateLookupIn(Class, Lookup)' nor 'Lookup(Class, int)' method in java.lang.invoke.MethodHandles.",
                     e);
-            } catch (Throwable t) {
+            } catch (Exception e) {
                 lookup = null;
             }
         }
@@ -85,9 +88,8 @@ public class MybatisMapperProxy<T> implements InvocationHandler, Serializable {
         try {
             if (Object.class.equals(method.getDeclaringClass())) {
                 return method.invoke(this, args);
-            } else {
-                return cachedInvoker(method).invoke(proxy, method, args, sqlSession);
             }
+            return cachedInvoker(method).invoke(proxy, method, args, sqlSession);
         } catch (Throwable t) {
             throw ExceptionUtil.unwrapThrowable(t);
         }
@@ -95,20 +97,18 @@ public class MybatisMapperProxy<T> implements InvocationHandler, Serializable {
 
     private MapperMethodInvoker cachedInvoker(Method method) throws Throwable {
         try {
-            return CollectionUtils.computeIfAbsent(methodCache, method, m -> {
-                if (m.isDefault()) {
-                    try {
-                        if (privateLookupInMethod == null) {
-                            return new DefaultMethodInvoker(getMethodHandleJava8(method));
-                        } else {
-                            return new DefaultMethodInvoker(getMethodHandleJava9(method));
-                        }
-                    } catch (IllegalAccessException | InstantiationException | InvocationTargetException
-                        | NoSuchMethodException e) {
-                        throw new RuntimeException(e);
-                    }
-                } else {
+            return MapUtil.computeIfAbsent(methodCache, method, m -> {
+                if (!m.isDefault()) {
                     return new PlainMethodInvoker(new MybatisMapperMethod(mapperInterface, method, sqlSession.getConfiguration()));
+                }
+                try {
+                    if (privateLookupInMethod == null) {
+                        return new DefaultMethodInvoker(getMethodHandleJava8(method));
+                    }
+                    return new DefaultMethodInvoker(getMethodHandleJava9(method));
+                } catch (IllegalAccessException | InstantiationException | InvocationTargetException
+                         | NoSuchMethodException e) {
+                    throw new RuntimeException(e);
                 }
             });
         } catch (RuntimeException re) {
@@ -119,6 +119,10 @@ public class MybatisMapperProxy<T> implements InvocationHandler, Serializable {
 
     public SqlSession getSqlSession() {
         return sqlSession;
+    }
+
+    public Class<T> getMapperInterface() {
+        return mapperInterface;
     }
 
     private MethodHandle getMethodHandleJava9(Method method)
@@ -143,7 +147,6 @@ public class MybatisMapperProxy<T> implements InvocationHandler, Serializable {
         private final MybatisMapperMethod mapperMethod;
 
         public PlainMethodInvoker(MybatisMapperMethod mapperMethod) {
-            super();
             this.mapperMethod = mapperMethod;
         }
 
@@ -163,7 +166,23 @@ public class MybatisMapperProxy<T> implements InvocationHandler, Serializable {
 
         @Override
         public Object invoke(Object proxy, Method method, Object[] args, SqlSession sqlSession) throws Throwable {
-            return methodHandle.bindTo(proxy).invokeWithArguments(args);
+            boolean hasIgnoreStrategy = InterceptorIgnoreHelper.hasIgnoreStrategy();
+            if (hasIgnoreStrategy) {
+                return methodHandle.bindTo(proxy).invokeWithArguments(args);
+            } else {
+                try {
+                    MybatisMapperProxy<?> mybatisMapperProxy = MybatisUtils.getMybatisMapperProxy(proxy);
+                    Class<?> mapperInterface = mybatisMapperProxy.getMapperInterface();
+                    IgnoreStrategy ignoreStrategy = InterceptorIgnoreHelper.findIgnoreStrategy(mapperInterface, method);
+                    if (ignoreStrategy == null) {
+                        ignoreStrategy = IgnoreStrategy.builder().build();
+                    }
+                    InterceptorIgnoreHelper.handle(ignoreStrategy);
+                    return methodHandle.bindTo(proxy).invokeWithArguments(args);
+                } finally {
+                    InterceptorIgnoreHelper.clearIgnoreStrategy();
+                }
+            }
         }
     }
 }

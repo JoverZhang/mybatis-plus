@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,6 +65,7 @@ public class TypeRegistry {
         typeMap.put(Types.DATE, DbColumnType.DATE);
         //timestamp
         typeMap.put(Types.TIMESTAMP, DbColumnType.TIMESTAMP);
+        typeMap.put(Types.TIMESTAMP_WITH_TIMEZONE, DbColumnType.TIMESTAMP);
         //double
         typeMap.put(Types.FLOAT, DbColumnType.DOUBLE);
         typeMap.put(Types.REAL, DbColumnType.DOUBLE);

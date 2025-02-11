@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,16 @@
 package com.baomidou.mybatisplus.extension.handlers;
 
 import com.baomidou.mybatisplus.core.toolkit.Assert;
+import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.MappedJdbcTypes;
 import org.apache.ibatis.type.MappedTypes;
 
-import java.io.IOException;
 import java.lang.reflect.Field;
-import java.lang.reflect.Type;
 
 /**
  * Jackson 实现 JSON 字段类型处理器
@@ -47,17 +47,15 @@ public class JacksonTypeHandler extends AbstractJsonTypeHandler<Object> {
         super(type, field);
     }
 
-
     @Override
     public Object parse(String json) {
+        ObjectMapper objectMapper = getObjectMapper();
+        TypeFactory typeFactory = objectMapper.getTypeFactory();
+        JavaType javaType = typeFactory.constructType(getFieldType());
         try {
-            return getObjectMapper().readValue(json, new TypeReference<Object>() {
-                @Override
-                public Type getType() {
-                    return getFieldType();
-                }
-            });
-        } catch (IOException e) {
+            return objectMapper.readValue(json, javaType);
+        } catch (JacksonException e) {
+            log.error("deserialize json: " + json + " to " + javaType + " error ", e);
             throw new RuntimeException(e);
         }
     }
@@ -67,6 +65,7 @@ public class JacksonTypeHandler extends AbstractJsonTypeHandler<Object> {
         try {
             return getObjectMapper().writeValueAsString(obj);
         } catch (JsonProcessingException e) {
+            log.error("serialize " + obj + " to json error ", e);
             throw new RuntimeException(e);
         }
     }
@@ -82,4 +81,5 @@ public class JacksonTypeHandler extends AbstractJsonTypeHandler<Object> {
         Assert.notNull(objectMapper, "ObjectMapper should not be null");
         JacksonTypeHandler.OBJECT_MAPPER = objectMapper;
     }
+
 }

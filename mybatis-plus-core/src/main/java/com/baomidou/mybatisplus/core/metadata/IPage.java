@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,7 +102,9 @@ public interface IPage<T> extends Serializable {
     /**
      * 内部什么也不干
      * <p>只是为了 json 反序列化时不报错</p>
+     * @deprecated 3.5.8
      */
+    @Deprecated
     default IPage<T> setPages(long pages) {
         // to do nothing
         return this;

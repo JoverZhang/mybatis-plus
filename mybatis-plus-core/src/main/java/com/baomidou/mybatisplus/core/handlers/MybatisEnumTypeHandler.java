@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author hubin
  * @since 2017-10-11
  */
-public class MybatisEnumTypeHandler<E extends Enum<E>> extends BaseTypeHandler<E> {
+public final class MybatisEnumTypeHandler<E extends Enum<E>> extends BaseTypeHandler<E> {
 
     private static final Map<String, String> TABLE_METHOD_OF_ENUM_TYPES = new ConcurrentHashMap<>();
     private static final ReflectorFactory REFLECTOR_FACTORY = new DefaultReflectorFactory();

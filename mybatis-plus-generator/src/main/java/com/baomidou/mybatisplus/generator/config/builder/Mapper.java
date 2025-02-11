@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import com.baomidou.mybatisplus.generator.config.ConstVal;
 import com.baomidou.mybatisplus.generator.config.StrategyConfig;
 import com.baomidou.mybatisplus.generator.config.po.TableInfo;
 import com.baomidou.mybatisplus.generator.function.ConverterFileName;
+import com.baomidou.mybatisplus.generator.IGenerateMapperMethodHandler;
+import com.baomidou.mybatisplus.generator.model.MapperMethod;
 import com.baomidou.mybatisplus.generator.util.ClassUtils;
 import lombok.Getter;
 import org.apache.ibatis.cache.Cache;
@@ -29,8 +31,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 控制器属性配置
@@ -114,6 +119,38 @@ public class Mapper implements ITemplate {
      */
     private Class<? extends Cache> cache;
 
+    /**
+     * 是否生成XML
+     *
+     * @since 3.5.6
+     */
+    @Getter
+    private boolean generateMapperXml = true;
+
+    /**
+     * 是否生成Mapper
+     *
+     * @since 3.5.6
+     */
+    @Getter
+    private boolean generateMapper = true;
+
+    /**
+     * Mapper模板路径
+     *
+     * @since 3.5.6
+     */
+    @Getter
+    private String mapperTemplatePath = ConstVal.TEMPLATE_MAPPER;
+
+    /**
+     * MapperXml模板路径
+     *
+     * @since 3.5.6
+     */
+    @Getter
+    private String mapperXmlTemplatePath = ConstVal.TEMPLATE_XML;
+
     @NotNull
     public String getSuperClass() {
         return superClass;
@@ -127,6 +164,13 @@ public class Mapper implements ITemplate {
     public Class<? extends Cache> getCache() {
         return this.cache == null ? LoggingCache.class : this.cache;
     }
+
+    /**
+     * Mapper层方法生成
+     *
+     * @since 3.5.10
+     */
+    private IGenerateMapperMethodHandler generateMapperMethodHandler;
 
     @Override
     @NotNull
@@ -145,6 +189,16 @@ public class Mapper implements ITemplate {
             data.put("cacheClassName", cacheClass.getName());
         }
         data.put("superMapperClass", ClassUtils.getSimpleName(this.superClass));
+        data.put("generateMapperXml", this.generateMapperXml);
+        data.put("generateMapper", this.generateMapper);
+        List<MapperMethod> methodList = null;
+        Set<String> importPackages = null;
+        if (generateMapperMethodHandler != null) {
+            methodList = generateMapperMethodHandler.getMethodList(tableInfo);
+            importPackages = generateMapperMethodHandler.getImportPackages(tableInfo);
+        }
+        data.put("importPackages", importPackages == null ? Collections.emptySet() : importPackages);
+        data.put("mapperMethodList", methodList == null ? Collections.emptyList() : methodList);
         return data;
     }
 
@@ -303,6 +357,74 @@ public class Mapper implements ITemplate {
          */
         public Builder enableFileOverride() {
             this.mapper.fileOverride = true;
+            return this;
+        }
+
+        /**
+         * Service模板路径
+         *
+         * @return this
+         * @since 3.5.6
+         */
+        public Builder mapperTemplate(@NotNull String template) {
+            this.mapper.mapperTemplatePath = template;
+            return this;
+        }
+
+        /**
+         * ServiceImpl模板路径
+         *
+         * @return this
+         * @since 3.5.6
+         */
+        public Builder mapperXmlTemplate(@NotNull String template) {
+            this.mapper.mapperXmlTemplatePath = template;
+            return this;
+        }
+
+        /**
+         * 禁用Mapper生成
+         *
+         * @return this
+         * @since 3.5.6
+         */
+        public Builder disable() {
+            this.mapper.generateMapper = false;
+            this.mapper.generateMapperXml = false;
+            return this;
+        }
+
+        /**
+         * 禁用Mapper接口生成
+         *
+         * @return this
+         * @since 3.5.6
+         */
+        public Builder disableMapper() {
+            this.mapper.generateMapper = false;
+            return this;
+        }
+
+        /**
+         * 禁用MapperXml生成
+         *
+         * @return this
+         * @since 3.5.6
+         */
+        public Builder disableMapperXml() {
+            this.mapper.generateMapperXml = false;
+            return this;
+        }
+
+        /**
+         * Mapper层方法生成处理器
+         *
+         * @param generateMapperMethodHandler 处理器
+         * @return this
+         * @since 3.5.10
+         */
+        public Builder generateMapperMethodHandler(IGenerateMapperMethodHandler generateMapperMethodHandler) {
+            this.mapper.generateMapperMethodHandler = generateMapperMethodHandler;
             return this;
         }
 

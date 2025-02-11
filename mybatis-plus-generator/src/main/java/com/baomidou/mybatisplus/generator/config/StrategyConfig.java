@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,6 +113,9 @@ public class StrategyConfig {
 
     /**
      * 不包含表名
+     * <p>
+     * 只在{@link com.baomidou.mybatisplus.generator.query.SQLQuery}模式下生效.
+     * </p>
      *
      * @since 3.3.0
      */
@@ -360,7 +363,7 @@ public class StrategyConfig {
         return notLikeTable;
     }
 
-    @Nullable
+    @NotNull
     public IOutputFile getOutputFile() {
         return outputFile;
     }

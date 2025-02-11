@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * <p>
- * </p>
+ * SqlRunner执行接口
  *
  * @author yuxiaobin
  * @since 2018/2/7

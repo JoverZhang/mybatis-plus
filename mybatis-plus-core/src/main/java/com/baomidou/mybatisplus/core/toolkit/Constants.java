@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,14 @@ public interface Constants extends StringPool, Serializable {
      * 实体类
      */
     String ENTITY = "et";
+
+    /**
+     * 填充实体
+     *
+     * @since 3.5.8
+     */
+    String MP_FILL_ET = "mpFillEt";
+
     /**
      * 实体类 带后缀 ==> .
      */
@@ -179,4 +187,10 @@ public interface Constants extends StringPool, Serializable {
      */
     String WRAPPER_PARAM = "MPGENVAL";
     String WRAPPER_PARAM_MIDDLE = ".paramNameValuePairs" + DOT;
+
+
+    /**
+     * 默认批次提交数量
+     */
+    int DEFAULT_BATCH_SIZE = 1000;
 }

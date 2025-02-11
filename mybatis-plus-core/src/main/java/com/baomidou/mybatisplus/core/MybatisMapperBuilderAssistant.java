@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,13 +47,14 @@ public class MybatisMapperBuilderAssistant extends MapperBuilderAssistant {
         super(configuration, resource);
     }
 
+    @Override
     public ResultMapping buildResultMapping(Class<?> resultType, String property, String column, Class<?> javaType,
                                             JdbcType jdbcType, String nestedSelect, String nestedResultMap, String notNullColumn, String columnPrefix,
                                             Class<? extends TypeHandler<?>> typeHandler, List<ResultFlag> flags, String resultSet, String foreignColumn,
                                             boolean lazy) {
         Class<?> javaTypeClass = resolveResultJavaType(resultType, property, javaType);
         TypeHandler<?> typeHandlerInstance = null;
-        if (typeHandler != null && typeHandler != UnknownTypeHandler.class) {
+        if (typeHandler != null) {
             if (IJsonTypeHandler.class.isAssignableFrom(typeHandler)) {
                 try {
                     Field field = resultType.getDeclaredField(property);

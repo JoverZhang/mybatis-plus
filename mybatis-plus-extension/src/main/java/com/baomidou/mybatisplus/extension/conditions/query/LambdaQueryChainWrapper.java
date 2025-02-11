@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,12 @@ public class LambdaQueryChainWrapper<T> extends AbstractChainWrapper<T, SFunctio
         super();
         this.baseMapper = baseMapper;
         super.wrapperChildren = new LambdaQueryWrapper<>(entityClass);
+    }
+
+    public LambdaQueryChainWrapper(BaseMapper<T> baseMapper, LambdaQueryWrapper<T> wrapperChildren) {
+        super();
+        this.baseMapper = baseMapper;
+        super.wrapperChildren = wrapperChildren;
     }
 
     @Override

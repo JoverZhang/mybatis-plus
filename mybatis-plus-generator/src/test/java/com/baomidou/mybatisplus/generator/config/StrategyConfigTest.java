@@ -1,18 +1,3 @@
-/*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
- * <p>
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- * <p>
- * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
 package com.baomidou.mybatisplus.generator.config;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
@@ -47,6 +32,35 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @since 2019-02-20
  */
 class StrategyConfigTest {
+
+    @Test
+    void test() {
+        StrategyConfig strategyConfig;
+        // 默认全开
+        strategyConfig = new StrategyConfig.Builder().build();
+        Assertions.assertTrue(strategyConfig.controller().isGenerate());
+        Assertions.assertTrue(strategyConfig.entity().isGenerate());
+        Assertions.assertTrue(strategyConfig.service().isGenerateService());
+        Assertions.assertTrue(strategyConfig.service().isGenerateServiceImpl());
+        Assertions.assertTrue(strategyConfig.mapper().isGenerateMapper());
+        Assertions.assertTrue(strategyConfig.mapper().isGenerateMapperXml());
+        strategyConfig =
+            new StrategyConfig.Builder()
+                .entityBuilder()
+                .javaTemplate("/templates/entity.java")
+                .disable()
+                .serviceBuilder().disable()
+                .disableService().serviceTemplate("/templates/service.java").serviceImplTemplate("/templates/serviceImpl.java")
+                .mapperBuilder().disableMapper().disableMapperXml()
+                .controllerBuilder().disable().template("")
+                .build();
+        Assertions.assertFalse(strategyConfig.controller().isGenerate());
+        Assertions.assertFalse(strategyConfig.entity().isGenerate());
+        Assertions.assertFalse(strategyConfig.service().isGenerateService());
+        Assertions.assertFalse(strategyConfig.service().isGenerateServiceImpl());
+        Assertions.assertFalse(strategyConfig.mapper().isGenerateMapper());
+        Assertions.assertFalse(strategyConfig.mapper().isGenerateMapperXml());
+    }
 
     @Test
     void baseEntity() {

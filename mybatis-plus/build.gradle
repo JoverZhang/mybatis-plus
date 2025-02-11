@@ -1,15 +1,13 @@
 dependencies {
     api project(":mybatis-plus-core")
     api project(":mybatis-plus-annotation")
-    api project(":mybatis-plus-extension")
+    api project(":mybatis-plus-spring")
 
     api "${lib.mybatis}"
-    api "${lib.'jsqlparser'}"
 
     implementation "${lib."mybatis-spring"}"
 
     testImplementation "${lib.'spring-web'}"
-    testImplementation "${lib.'javax.servlet-api'}"
 
     testImplementation "${lib.'spring-test'}"
     testImplementation "${lib.'spring-aop'}"
@@ -23,14 +21,12 @@ dependencies {
     testImplementation "${lib.postgresql}"
     testImplementation lib.oracle as ConfigurableFileTree
     testImplementation "${lib.mysql}"
-    testImplementation "${lib.'mybatis-ehcache'}"
-    testImplementation "${lib.'mybatis-redis'}"
     testImplementation "${lib.'spring-context-support'}"
     testImplementation "${lib.'spring-jdbc'}"
     testImplementation "${lib.'slf4j-api'}"
     testImplementation "${lib.'logback-classic'}"
-    testImplementation "javax.annotation:javax.annotation-api:1.3.2"
     testImplementation "${lib.cglib}"
     testImplementation "${lib.postgresql}"
+    testImplementation project(":mybatis-plus-jsqlparser-support:mybatis-plus-jsqlparser")
 //    testCompile ('org.apache.phoenix:phoenix-core:5.0.0-HBase-2.0')
 }

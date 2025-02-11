@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,18 @@ public class UpdateChainWrapper<T> extends AbstractChainWrapper<T, String, Updat
     }
 
     @Override
+    public UpdateChainWrapper<T> setIncrBy(boolean condition, String column, Number val) {
+        wrapperChildren.setIncrBy(condition, column, val);
+        return typedThis;
+    }
+
+    @Override
+    public UpdateChainWrapper<T> setDecrBy(boolean condition, String column, Number val) {
+        wrapperChildren.setDecrBy(condition, column, val);
+        return typedThis;
+    }
+
+    @Override
     public String getSqlSet() {
         throw ExceptionUtils.mpe("can not use this method for \"%s\"", "getSqlSet");
     }
@@ -73,5 +85,12 @@ public class UpdateChainWrapper<T> extends AbstractChainWrapper<T, String, Updat
     @Override
     public Class<T> getEntityClass() {
         return entityClass;
+    }
+
+    public LambdaUpdateChainWrapper<T> lambda(){
+        return new LambdaUpdateChainWrapper<>(
+            baseMapper,
+            wrapperChildren.lambda()
+        );
     }
 }

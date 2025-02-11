@@ -1,24 +1,8 @@
-/*
- * Copyright (c) 2011-2020, baomidou (jobob@qq.com).
- * <p>
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- * <p>
- * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
 package com.baomidou.mybatisplus.test;
 
 import com.baomidou.mybatisplus.autoconfigure.MybatisPlusAutoConfiguration;
 import com.baomidou.mybatisplus.autoconfigure.MybatisPlusLanguageDriverAutoConfiguration;
 import com.baomidou.mybatisplus.autoconfigure.MybatisPlusProperties;
-import com.baomidou.mybatisplus.core.MybatisConfiguration;
 import com.baomidou.mybatisplus.core.config.GlobalConfig;
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
@@ -68,7 +52,6 @@ class MetadataTest {
         DocumentContext documentContext = JsonPath.parse(new FileSystemResource("build/classes/java/main/META-INF/spring-configuration-metadata.json").getInputStream());
         List<Map<String, String>> properties = documentContext.read("$.properties");
         Map<String, Metadata> metadataMap = properties.stream().map(map -> new Metadata(map.get("name"), map.get("type"), map.get("sourceType"))).collect(Collectors.toMap(Metadata::getName, metadata -> metadata));
-        Assertions.assertEquals(metadataMap.get("mybatis-plus.type-enums-package"), new Metadata("mybatis-plus.type-enums-package", String.class.getName(), MybatisPlusProperties.class.getName()));
         Assertions.assertEquals(metadataMap.get("mybatis-plus.type-aliases-package"), new Metadata("mybatis-plus.type-aliases-package", String.class.getName(), MybatisPlusProperties.class.getName()));
         Assertions.assertEquals(metadataMap.get("mybatis-plus.global-config.db-config.table-underline"), new Metadata("mybatis-plus.global-config.db-config.table-underline", Boolean.class.getName(), GlobalConfig.DbConfig.class.getName()));
         Assertions.assertEquals(metadataMap.get("mybatis-plus.config-location"), new Metadata("mybatis-plus.config-location", String.class.getName(), MybatisPlusProperties.class.getName()));

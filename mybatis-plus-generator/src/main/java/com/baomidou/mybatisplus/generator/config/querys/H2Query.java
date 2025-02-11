@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package com.baomidou.mybatisplus.generator.config.querys;
+
+import com.baomidou.mybatisplus.generator.config.DataSourceConfig;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -72,4 +74,10 @@ public class H2Query extends AbstractDbQuery {
     public boolean isKeyIdentity(ResultSet results) throws SQLException {
         return results.getString("SEQUENCE_NAME") != null;
     }
+
+    @Override
+    public String primaryKeySql(DataSourceConfig dataSourceConfig, String tableName) {
+        return String.format(PK_QUERY_SQL, tableName);
+    }
+
 }

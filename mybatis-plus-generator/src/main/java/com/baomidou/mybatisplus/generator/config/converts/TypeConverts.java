@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,7 +92,9 @@ public class TypeConverts {
     static BranchBuilder<String, IColumnType> containsAny(CharSequence... values) {
         return BranchBuilder.of(s -> {
             for (CharSequence value : values) {
-                if (s.contains(value)) return true;
+                if (s.contains(value)) {
+                    return true;
+                }
             }
             return false;
         });

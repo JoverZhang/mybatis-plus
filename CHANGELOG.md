@@ -1,4 +1,128 @@
 ﻿# CHANGELOG
+## [v3.5.10.1] 2025.01.13
+- fix: 修复动态节点处理错误
+
+## [v3.5.10] 2025.01.12
+- fix: 修复字段有`TableField`注解但未指定`value`值下全局`columnFormat`未生效问题
+- fix: 修复enjoy模板生成kotlin代码报错
+- fix: 修复enjoy模板生成字符串代码报错
+- fix: 修复springdoc生成注解未转义双引号
+- fix: 修复数据变动插件更新无主键报错
+- fix: 修复多表解析processJoins解析表出现越界
+- feat: TableName注解新增`properties`属性
+- feat: 支持@InterceptorIgnore注解在default方法上
+- feat: 适配jsqlparser5.1版本(5.0兼容版本请使用`mybatis-plus-jsqlparser-5.0`)
+- feat: 提供`InterceptorIgnoreHelper.execute`模板执行方法处理插件跳过策略(防止手动使用handle方法出现未清理线程资源造成的错误)
+- feat: 代码生成器全局package配置属性支持自定义模板信息获取
+- feat: 代码生成器新增表索引信息获取
+- feat: 代码生成器提供`Mapper.Builder.generateMapperMethodHandler`处理器基于索引生成索引方法
+- feat: 代码生成器Entity支持自定义Class注解和字段注解生成
+- feat: 代码生成器Entity支持lombok模式指定生成类注解
+- feat: 代码生成器Entity支持ToString`(Entity.Builder.toString(boolean))`方法控制生成 (默认生成,lombok模式下将会生成@ToString,低版本下lombok不生成,属于不兼容改动)
+- feat: 代码生成器Entity支持字段文档注释(`Entity.Builder.fieldUseJavaDoc(boolean)`)控制生成 (默认生成,低版本下,使用swagger或springdoc不会生成字段文档注释,属于不兼容改动)
+- feat: 重写动态语句生成(生成执行SQL将不再包含\n换行符)
+- feat: 安全加密处理器密钥获取支持环境变量与系统属性传入
+- feat: 升级mybatis至3.5.19
+- feat: 升级springboot至3.4.1
+- feat: 升级kotlin至2.1.0
+- 实用性低,检查语法不完善,计划移除IllegalSQLInnerInterceptor插件
+- 功能缺陷较多,计划移除DataChangeRecorderInnerInterceptor插件
+
+## [v3.5.9] 2024.10.23
+- opt: 优化代码生成器支持可视化配置生成能力
+- opt: 解耦扩展包不再强制依赖 spring 开发框架
+- opt: 拆分jsqlparser支持模块,提供mybatis-plus-jsqlparser(支持最新jsqlparser)与mybatis-plus-jsqlparser-4.9模块, 默认不携带,升级后需要自行引入.
+- feat: 重构 service 模块抽象为 CrudRepository 不再建议使用 IService 避免业务层数据混乱
+- feat: 新增 solon 启动插件支持
+- feat: 升级SpringBoot3.3.4
+- feat: 升级velocity2.4
+
+## [v3.5.8] 2024.09.18
+- fix: 解决optimizeJoinOfCountSql反序列化不支持问题
+- fix: 解决Db工具类批量操作使用rewriteBatchedStatements=true返回值不准确
+- fix: 修复逻辑删除填充与乐观锁冲突
+- fix: 修复IllegalSQLInnerInterceptor分析嵌套count语句错误
+- fix: 升级jsqlParser5.0 解决 for update 语句错误
+- fix: 修复处自增自减负数情况导致jsqlParser解析优化错误
+- fix: 修复removeMapper缓存清理不完全
+- fix: 修复SqlServerQuery查询表注释乱码
+- opt: 完善函数注入校验逻辑
+- opt: Page属性访问调整为private,重写toString方法
+- opt: 主键生成策略(uuid)不支持的类型打印警告日志
+- opt: MybatisPlusException转化为PersistenceException子类
+- feat: 增加deleteByIds空集合处理
+- feat: 重命名selectBatchIds方法为selectByIds
+- feat: 支持tableName与schema属性占位符配
+- feat: 代码生成器增加对虚拟列的属性获取
+- feat: chain wrapper to lambda chain wrapper #6314
+- feat: 代码生成器增加手动指定数据库驱动兼容不能自动注册的驱动实现
+- feat: 升级kotlin2.0.0
+- feat: 升级SpringBoot3.3.2
+- feat: 升级fastjson2.0.52
+- feat: 升级mybatis-spring3.0.4
+- feat: 升级spring-cloud-commons4.1.4
+- feat: 部分支持依赖升级更新
+- feat: 支持GoldenDB数据库
+- feat: 支持Duckdb数据库
+- feat: 支持Derby数据库
+- feat: 支持Vastbase数据库
+
+## [v3.5.7] 2024.06.10
+- fix: 修复动态表名处理 update ignore 错误
+- fix: 修复SQLServer2005分页处理空格错误
+- fix: 修复多租户查询出现问题
+- fix: 修正非通用泛型情况下序列化json减少强转
+- fix: 修复代码生成器禁用模板失效
+- fix: 修复分页count优化distinct搭配orderBy处理错误
+- fix: 修复达梦数据库生成代码错误
+- fix: 修复租户插件特殊exists语句会失效
+- fix: 修复sqlite数据库ddl_history错误导致无法创建表
+- fix: 修复DataChangeRecorderInnerInterceptor在Insert时配置忽略无效
+- fix: 修复代码生成器处理不标准的JdbcType导致空指针错误
+- feat: BaseMapper新增批量操作与InsertOrUpdate方法
+- feat: BaseMapper新增批量操作方法返回值List<BatchResult>
+- feat: BaseMapper方法逻辑删除默认支持填充
+- feat: 调整Service层逻辑删除填充逻辑处理
+- feat: 重构批量删除参数填充处理逻辑.
+- feat: 自增自减处理BigDecimal
+- feat: 新增雪花ID配置（支持手动分配workerId与datacenterId或指定网卡信息自动获取方式）
+- feat: 重构ServiceImpl泛型参数提取
+- feat: 修改AES密钥随机性生成
+- feat: UpdateWrapper增加checkSqlInjection方法
+- feat: 调整DDL脚本自动装配逻辑(当无实现时或无mybatis-plus-extension模块时不注入DDL运行bean)
+- feat: 注入方法deleteBatchIds重命名deleteByIds
+- feat: SpringBoot升级至2.7.18和3.2.6
+- feat: 升级kotlin至1.9.24
+- feat: 升级lombok至1.18.32
+
+## [v3.5.6] 2024.04.08
+- fix: 修复通用Service多层代理引发的错误
+- fix: 修复Json类型处理器反序列化泛型丢失原始类型
+- fix: 修复填充器处理器基本类型数组出现强制错误
+- fix: 修复上版本移除掉Page方法保留至PageDto类之中
+- fix: 修复IllegalSQLInnerInterceptor未处理Parenthesis
+- fix: 修复IllegalSQLInnerInterceptor表名或字段名包裹导致无法获取索引信息和索引字段校验问题
+- fix: 修复KtUpdateChainWrapper调用setSql的时候params没有展开
+- fix: 修复useGeneratedShortKey配置失效
+- fix: 修复DataChangeRecorderInnerInterceptor一系列问题
+- feat: 去除sqlFirst与sqlComment转义(如有需要转义操作,请手动调用转义后传入)
+- feat: ServiceImpl修改为抽象类,防止错误直接实例化
+- feat: 重构代码生成器TemplateConfig配置,模板禁用与路径配置更改至对应具体实现之上
+- feat: 支持组合注解
+- feat: 新增 LambdaUpdateWrapper 字段自增 setIncrBy 自减 setDecrBy 方法
+- feat: 获取注入方法时传递org.apache.ibatis.session.Configuration
+- feat: 新增自增主键兼容配置开关(mybatis-plus.global-config.db-config.insert-ignore-auto-increment-column 默认false,开启INSERT语句无视主键字段生成)
+- feat: 新增参数填充器跳过方式(基于MappedStatement#id)
+- feat: 新增SQLite的DDL自动维护功
+- feat: 新增eqSql方法
+- feat: 新增SQL解析线程池
+- feat: 增加雪花ID生成器初始化日志打印(默认超过5秒打印警告日志)
+- feat: 升级mybatis至3.5.16
+- feat: 升级spring-cloud-commons
+- feat: 升级jsqlparser至4.9
+- test: Github增加CI
+- doc: 增加update(Wrapper)相关api无法自动填充注释
+
 ## [v3.5.5] 2023.12.24
 - fix: 修复配置databaseId失效
 - fix: 修复自增主键忽略注入错误忽略非自增主键注入问题

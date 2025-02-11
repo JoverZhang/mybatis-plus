@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.baomidou.mybatisplus.core.toolkit.Constants;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -84,10 +85,25 @@ public class LambdaUpdateWrapper<T> extends AbstractLambdaWrapper<T, LambdaUpdat
 
     @Override
     public LambdaUpdateWrapper<T> setSql(boolean condition, String setSql, Object... params) {
-        if (condition && StringUtils.isNotBlank(setSql)) {
+        return maybeDo(condition && StringUtils.isNotBlank(setSql), () -> {
             sqlSet.add(formatSqlMaybeWithParam(setSql, params));
-        }
-        return typedThis;
+        });
+    }
+
+    @Override
+    public LambdaUpdateWrapper<T> setIncrBy(boolean condition, SFunction<T, ?> column, Number val) {
+        return maybeDo(condition, () -> {
+            String realColumn = columnToString(column);
+            sqlSet.add(String.format("%s=%s + %s", realColumn, realColumn, val instanceof BigDecimal ? ((BigDecimal) val).toPlainString() : val));
+        });
+    }
+
+    @Override
+    public LambdaUpdateWrapper<T> setDecrBy(boolean condition, SFunction<T, ?> column, Number val) {
+        return maybeDo(condition, () -> {
+            String realColumn = columnToString(column);
+            sqlSet.add(String.format("%s=%s - %s", realColumn, realColumn, val instanceof BigDecimal ? ((BigDecimal) val).toPlainString() : val));
+        });
     }
 
     @Override

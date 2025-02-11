@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,35 @@ public class Service implements ITemplate {
 
     private Service() {
     }
+
+    /**
+     * 是否生成serviceImpl
+     *
+     * @since 3.5.6
+     */
+    @Getter
+    private boolean generateServiceImpl = true;
+
+
+    /**
+     * 是否生成service
+     *
+     * @since 3.5.6
+     */
+    @Getter
+    private boolean generateService = true;
+
+    /**
+     * @since 3.5.6
+     */
+    @Getter
+    private String serviceTemplate = ConstVal.TEMPLATE_SERVICE;
+
+    /**
+     * @since 3.5.6
+     */
+    @Getter
+    private String serviceImplTemplate = ConstVal.TEMPLATE_SERVICE_IMPL;
 
     /**
      * 自定义继承的Service类全称，带包名
@@ -102,6 +131,8 @@ public class Service implements ITemplate {
         data.put("superServiceClass", ClassUtils.getSimpleName(this.superServiceClass));
         data.put("superServiceImplClassPackage", this.superServiceImplClass);
         data.put("superServiceImplClass", ClassUtils.getSimpleName(this.superServiceImplClass));
+        data.put("generateServiceImpl", this.generateServiceImpl);
+        data.put("generateService", this.generateService);
         return data;
     }
 
@@ -218,6 +249,62 @@ public class Service implements ITemplate {
          */
         public Builder enableFileOverride() {
             this.service.fileOverride = true;
+            return this;
+        }
+
+        /**
+         * 禁用生成Service
+         *
+         * @return this
+         * @since 3.5.6
+         */
+        public Builder disable() {
+            this.service.generateService = false;
+            this.service.generateServiceImpl = false;
+            return this;
+        }
+
+        /**
+         * 禁用生成
+         *
+         * @return this
+         * @since 3.5.6
+         */
+        public Builder disableService() {
+            this.service.generateService = false;
+            return this;
+        }
+
+        /**
+         * 禁用生成ServiceImpl
+         *
+         * @return this
+         * @since 3.5.6
+         */
+        public Builder disableServiceImpl() {
+            this.service.generateServiceImpl = false;
+            return this;
+        }
+
+        /**
+         * Service模板路径
+         *
+         * @return this
+         * @since 3.5.6
+         */
+        public Builder serviceTemplate(@NotNull String template) {
+            this.service.serviceTemplate = template;
+            return this;
+        }
+
+        /**
+         * ServiceImpl模板路径
+         *
+         * @return this
+         * @since 3.5.6
+         */
+        public Builder serviceImplTemplate(@NotNull String template) {
+            this.service.serviceImplTemplate = template;
             return this;
         }
 

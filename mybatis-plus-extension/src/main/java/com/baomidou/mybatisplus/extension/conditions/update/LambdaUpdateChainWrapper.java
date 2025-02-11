@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.baomidou.mybatisplus.extension.conditions.update;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.Update;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.baomidou.mybatisplus.core.toolkit.ExceptionUtils;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.conditions.AbstractChainWrapper;
 
@@ -28,7 +27,6 @@ import com.baomidou.mybatisplus.extension.conditions.AbstractChainWrapper;
  * @author miemie
  * @since 2018-12-19
  */
-@SuppressWarnings({"serial"})
 public class LambdaUpdateChainWrapper<T> extends AbstractChainWrapper<T, SFunction<T, ?>, LambdaUpdateChainWrapper<T>, LambdaUpdateWrapper<T>>
     implements ChainUpdate<T>, Update<LambdaUpdateChainWrapper<T>, SFunction<T, ?>> {
 
@@ -46,6 +44,12 @@ public class LambdaUpdateChainWrapper<T> extends AbstractChainWrapper<T, SFuncti
         super.wrapperChildren = new LambdaUpdateWrapper<>(entityClass);
     }
 
+    public LambdaUpdateChainWrapper(BaseMapper<T> baseMapper, LambdaUpdateWrapper<T> wrapperChildren) {
+        super();
+        this.baseMapper = baseMapper;
+        super.wrapperChildren = wrapperChildren;
+    }
+
     @Override
     public LambdaUpdateChainWrapper<T> set(boolean condition, SFunction<T, ?> column, Object val, String mapping) {
         wrapperChildren.set(condition, column, val, mapping);
@@ -58,9 +62,35 @@ public class LambdaUpdateChainWrapper<T> extends AbstractChainWrapper<T, SFuncti
         return typedThis;
     }
 
+
+    /**
+     * 字段自增变量 val 值
+     *
+     * @param condition 条件
+     * @param column    字段
+     * @param val       值
+     * @return this
+     * @since 3.5.6
+     */
     @Override
-    public String getSqlSet() {
-        throw ExceptionUtils.mpe("can not use this method for \"%s\"", "getSqlSet");
+    public LambdaUpdateChainWrapper<T> setIncrBy(boolean condition, SFunction<T, ?> column, Number val) {
+        wrapperChildren.setIncrBy(condition, column, val);
+        return typedThis;
+    }
+
+    /**
+     * 字段自减变量 val 值
+     *
+     * @param condition 条件
+     * @param column    字段
+     * @param val       值
+     * @return this
+     * @since 3.5.6
+     */
+    @Override
+    public LambdaUpdateChainWrapper<T> setDecrBy(boolean condition, SFunction<T, ?> column, Number val) {
+        wrapperChildren.setDecrBy(condition, column, val);
+        return typedThis;
     }
 
     @Override

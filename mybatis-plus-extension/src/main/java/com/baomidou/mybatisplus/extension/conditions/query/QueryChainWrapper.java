@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,4 +83,13 @@ public class QueryChainWrapper<T> extends AbstractChainWrapper<T, String, QueryC
     public Class<T> getEntityClass() {
         return entityClass;
     }
+
+
+    public LambdaQueryChainWrapper<T> lambda(){
+        return new LambdaQueryChainWrapper<>(
+            baseMapper,
+            wrapperChildren.lambda()
+        );
+    }
+
 }

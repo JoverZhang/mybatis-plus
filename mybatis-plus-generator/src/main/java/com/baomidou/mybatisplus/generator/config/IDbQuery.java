@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,4 +78,17 @@ public interface IDbQuery {
      * 自定义字段名称
      */
     String[] fieldCustom();
+
+    /**
+     * 获取主键sql
+     *
+     * @param dataSourceConfig 数据库配置信息
+     * @param tableName        表名
+     * @return 主键查询sql
+     * @since 3.5.7
+     */
+    default String primaryKeySql(DataSourceConfig dataSourceConfig, String tableName) {
+        return null;
+    }
+
 }
